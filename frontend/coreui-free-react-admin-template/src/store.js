@@ -1,0 +1,125 @@
+/**
+ * Redux Store Configuration
+ *
+ * Simple Redux store managing global application state.
+ * Handles sidebar visibility and theme preferences.
+ *
+ * @module store
+ */
+
+import { legacy_createStore as createStore } from 'redux'
+import authStorage from './services/auth/authStorage'
+
+/**
+ * Initial state for the Redux store
+ * @type {Object}
+ * @property {boolean} sidebarShow - Controls sidebar visibility (true = visible, false = hidden)
+ * @property {string} theme - Current theme mode ('light', 'dark', or 'auto')
+ */
+const persistedSession = authStorage.getSession()
+
+const initialState = {
+  sidebarShow: true,
+  sidebarUnfoldable: false,
+  theme: 'light',
+  auth: {
+    isAuthenticated: Boolean(persistedSession?.token),
+    token: persistedSession?.token || null,
+    user: persistedSession?.user || null,
+    isBootstrapped: !persistedSession?.token,
+  },
+  app: {
+    error: null,
+  },
+}
+
+/**
+ * Root reducer function that handles all state changes
+ *
+ * @param {Object} state - Current state (defaults to initialState)
+ * @param {Object} action - Action object with type and payload
+ * @param {string} action.type - Action type ('set' to update state)
+ * @param {...*} rest - Additional properties to merge into state
+ * @returns {Object} New state object
+ *
+ * @example
+ * // Update sidebar visibility
+ * dispatch({ type: 'set', sidebarShow: false })
+ *
+ * @example
+ * // Update theme
+ * dispatch({ type: 'set', theme: 'dark' })
+ *
+ * @example
+ * // Update multiple properties
+ * dispatch({ type: 'set', sidebarShow: true, theme: 'light' })
+ */
+const changeState = (state = initialState, { type, ...rest }) => {
+  switch (type) {
+    case 'set':
+      return { ...state, ...rest }
+    case 'auth/loginSuccess':
+      return {
+        ...state,
+        auth: {
+          isAuthenticated: true,
+          token: rest.payload?.token || null,
+          user: rest.payload?.user || null,
+          isBootstrapped: true,
+        },
+      }
+    case 'auth/bootstrapSuccess':
+      return {
+        ...state,
+        auth: {
+          isAuthenticated: true,
+          token: rest.payload?.token || state.auth.token,
+          user: rest.payload?.user || null,
+          isBootstrapped: true,
+        },
+      }
+    case 'auth/bootstrapComplete':
+      return {
+        ...state,
+        auth: {
+          ...state.auth,
+          isBootstrapped: true,
+        },
+      }
+    case 'auth/logout':
+      return {
+        ...state,
+        auth: {
+          isAuthenticated: false,
+          token: null,
+          user: null,
+          isBootstrapped: true,
+        },
+      }
+    case 'app/setError':
+      return {
+        ...state,
+        app: {
+          ...state.app,
+          error: rest.payload,
+        },
+      }
+    case 'app/clearError':
+      return {
+        ...state,
+        app: {
+          ...state.app,
+          error: null,
+        },
+      }
+    default:
+      return state
+  }
+}
+
+/**
+ * Redux store instance
+ * @type {import('redux').Store}
+ */
+const store = createStore(changeState)
+export default store

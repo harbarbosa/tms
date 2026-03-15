@@ -1,0 +1,17 @@
+# Node / Vite
+frontend/coreui-free-react-admin-template/node_modules/
+frontend/coreui-free-react-admin-template/dist/
+
+# CodeIgniter writable artifacts
+backend/writable/cache/*
+backend/writable/debugbar/*
+backend/writable/logs/*
+backend/writable/session/*
+backend/writable/uploads/*
+
+# Environment / local config
+backend/.env
+
+# OS / editors
+.DS_Store
+Thumbs.db
