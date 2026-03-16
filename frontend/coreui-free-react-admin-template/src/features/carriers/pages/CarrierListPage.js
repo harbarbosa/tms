@@ -3,6 +3,7 @@ import { useDispatch } from 'react-redux'
 import { CAlert } from '@coreui/react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import CrudPageHeader from '../../../components/crud/CrudPageHeader'
+import CrudLoadingState from '../../../components/crud/CrudLoadingState'
 import CrudPagination from '../../../components/crud/CrudPagination'
 import DeleteConfirmModal from '../../../components/crud/DeleteConfirmModal'
 import useAuthorization from '../../../hooks/useAuthorization'
@@ -114,7 +115,7 @@ const CarrierListPage = () => {
         onReset={handleReset}
       />
       {isLoading ? (
-        <CAlert color="info">Carregando transportadoras...</CAlert>
+        <CrudLoadingState message="Carregando transportadoras..." />
       ) : (
         <>
           <CarrierTable
@@ -123,7 +124,14 @@ const CarrierListPage = () => {
             canEdit={hasPermission('carriers.update')}
             canDelete={hasPermission('carriers.delete')}
           />
-          <CrudPagination page={meta.page} pageCount={meta.pageCount} onPageChange={(page) => loadData(page, appliedFilters)} />
+          <CrudPagination
+            page={meta.page}
+            pageCount={meta.pageCount}
+            total={meta.total}
+            perPage={meta.perPage}
+            itemLabel="transportadoras"
+            onPageChange={(page) => loadData(page, appliedFilters)}
+          />
         </>
       )}
       <DeleteConfirmModal

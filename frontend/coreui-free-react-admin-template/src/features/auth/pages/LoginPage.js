@@ -17,6 +17,7 @@ import {
 import CIcon from '@coreui/icons-react'
 import { cilLockLocked, cilTruck, cilUser } from '@coreui/icons'
 import useAuth from '../../../hooks/useAuth'
+import { resolvePostLoginPath } from '../../../utils/homePaths'
 
 const LoginPage = () => {
   const navigate = useNavigate()
@@ -28,8 +29,6 @@ const LoginPage = () => {
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [localError, setLocalError] = useState('')
-
-  const redirectTo = location.state?.from?.pathname || '/dashboard'
 
   const handleChange = (event) => {
     const { name, value } = event.target
@@ -45,7 +44,8 @@ const LoginPage = () => {
     setIsSubmitting(true)
 
     try {
-      await login(credentials)
+      const session = await login(credentials)
+      const redirectTo = resolvePostLoginPath(session?.user, location.state?.from?.pathname)
       navigate(redirectTo, { replace: true })
     } catch (error) {
       setLocalError(error.message || 'Nao foi possivel autenticar seu acesso.')

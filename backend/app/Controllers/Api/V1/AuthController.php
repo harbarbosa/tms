@@ -23,7 +23,7 @@ class AuthController extends BaseApiController
         ];
 
         if (! $this->validateData($payload, $rules)) {
-            return $this->respondError('Dados de autenticacao invalidos.', $this->validator->getErrors(), 422);
+            return $this->respondValidationError('Dados de autenticacao invalidos.', $this->validator->getErrors());
         }
 
         try {

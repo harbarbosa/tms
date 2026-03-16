@@ -12,6 +12,11 @@ const vehicleService = {
     return response.data
   },
 
+  async options() {
+    const response = await apiClient.get('/vehicles/options')
+    return response.data
+  },
+
   async create(payload) {
     const response = await apiClient.post('/vehicles', payload)
     return response.data

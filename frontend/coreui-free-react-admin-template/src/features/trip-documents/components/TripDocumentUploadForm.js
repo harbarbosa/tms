@@ -12,7 +12,6 @@ import {
   CFormTextarea,
   CRow,
 } from '@coreui/react'
-import { tripDocumentTypes } from '../utils/tripDocumentValidation'
 
 const TripDocumentUploadForm = ({ values, errors, options, isSubmitting, onChange, onFileChange, onSubmit }) => {
   return (
@@ -42,7 +41,7 @@ const TripDocumentUploadForm = ({ values, errors, options, isSubmitting, onChang
               <CFormLabel>Tipo de documento</CFormLabel>
               <CFormSelect name="tipo_documento" value={values.tipo_documento} onChange={onChange} invalid={Boolean(errors.tipo_documento)}>
                 <option value="">Selecione</option>
-                {tripDocumentTypes.map((type) => (
+                {(options.typeOptions || []).map((type) => (
                   <option key={type} value={type}>
                     {type}
                   </option>

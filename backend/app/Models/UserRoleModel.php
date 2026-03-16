@@ -36,6 +36,7 @@ class UserRoleModel extends Model
                 ->orWhere('user_roles.company_id', null)
             ->groupEnd()
             ->where('roles.deleted_at', null)
+            ->where('roles.status', 'active')
             ->orderBy('user_roles.company_id', 'DESC')
             ->first();
     }
@@ -52,6 +53,7 @@ class UserRoleModel extends Model
                 ->orWhere('user_roles.company_id', null)
             ->groupEnd()
             ->where('roles.deleted_at', null)
+            ->where('roles.status', 'active')
             ->where('permissions.deleted_at', null)
             ->findAll();
 
@@ -59,5 +61,30 @@ class UserRoleModel extends Model
             static fn (array $row): string => $row['slug'],
             $rows
         )));
+    }
+
+    public function findRolesForUser(int $userId): array
+    {
+        return $this->select('roles.id, roles.name, roles.slug, roles.scope, roles.status, roles.is_system, user_roles.company_id')
+            ->join('roles', 'roles.id = user_roles.role_id')
+            ->where('user_roles.user_id', $userId)
+            ->where('roles.deleted_at', null)
+            ->orderBy('roles.name', 'ASC')
+            ->findAll();
+    }
+
+    public function syncUserRolesForCompany(int $userId, array $roleIds, int $companyId): void
+    {
+        $roleIds = array_values(array_unique(array_map('intval', $roleIds)));
+
+        $this->where('user_id', $userId)->delete();
+
+        foreach ($roleIds as $roleId) {
+            $this->insert([
+                'user_id' => $userId,
+                'role_id' => $roleId,
+                'company_id' => $companyId,
+            ]);
+        }
     }
 }

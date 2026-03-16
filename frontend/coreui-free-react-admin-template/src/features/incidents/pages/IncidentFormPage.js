@@ -41,7 +41,7 @@ const IncidentFormPage = () => {
     transport_document_id: preselectedTransportDocumentId,
   })
   const [errors, setErrors] = useState({})
-  const [options, setOptions] = useState({ transport_documents: [] })
+  const [options, setOptions] = useState({ transport_documents: [], typeOptions: [], statusOptions: [] })
   const [feedback, setFeedback] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
@@ -54,7 +54,11 @@ const IncidentFormPage = () => {
           isEdit ? incidentService.findById(id) : Promise.resolve(null),
         ])
 
-        setOptions({ transport_documents: loadedOptions.transport_documents || [] })
+        setOptions({
+          transport_documents: loadedOptions.transport_documents || [],
+          typeOptions: loadedOptions.typeOptions || [],
+          statusOptions: loadedOptions.statusOptions || [],
+        })
 
         if (incident) {
           setValues({

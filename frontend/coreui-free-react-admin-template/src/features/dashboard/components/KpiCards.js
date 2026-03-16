@@ -21,7 +21,7 @@ const KpiCards = ({ cards = {} }) => {
   return cardsConfig.map((item) => (
     <CCol sm={6} xl={4} xxl={2} key={item.key}>
       <CWidgetStatsF
-        className="mb-4"
+        className="mb-4 shadow-sm"
         color={item.color}
         icon={<CIcon icon={item.icon} height={24} />}
         title={item.title}

@@ -10,6 +10,7 @@ import {
 import { CChartBar, CChartDoughnut, CChartLine } from '@coreui/react-chartjs'
 import { getStyle } from '@coreui/utils'
 import { useDispatch } from 'react-redux'
+import CrudLoadingState from '../../../components/crud/CrudLoadingState'
 import DashboardFilters from '../components/DashboardFilters'
 import KpiCards from '../components/KpiCards'
 import QuickLists from '../components/QuickLists'
@@ -136,7 +137,7 @@ const DashboardPage = () => {
         }}
       />
 
-      {isLoading ? <CAlert color="info">Carregando indicadores do dashboard...</CAlert> : null}
+      {isLoading ? <CrudLoadingState message="Carregando indicadores do dashboard..." /> : null}
 
       <CRow className="mb-2">{!isLoading ? <KpiCards cards={summary.cards} /> : null}</CRow>
 

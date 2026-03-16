@@ -12,13 +12,14 @@ import {
   CTableRow,
 } from '@coreui/react'
 import CrudStatusBadge from '../../../components/crud/CrudStatusBadge'
+import CrudTableEmptyState from '../../../components/crud/CrudTableEmptyState'
 
 const VehicleTable = ({ items, onDelete }) => {
   return (
-    <CCard className="mb-4">
+    <CCard className="mb-4 shadow-sm border-0">
       <CCardBody>
-        <CTable hover responsive>
-          <CTableHead>
+        <CTable hover responsive align="middle">
+          <CTableHead color="light">
             <CTableRow>
               <CTableHeaderCell>Placa</CTableHeaderCell>
               <CTableHeaderCell>Tipo</CTableHeaderCell>
@@ -31,15 +32,18 @@ const VehicleTable = ({ items, onDelete }) => {
           </CTableHead>
           <CTableBody>
             {items.length === 0 ? (
-              <CTableRow>
-                <CTableDataCell colSpan={7} className="text-center text-body-secondary py-4">
-                  Nenhum veiculo encontrado com os filtros informados.
-                </CTableDataCell>
-              </CTableRow>
+              <CrudTableEmptyState
+                colSpan={7}
+                title="Nenhum veiculo encontrado."
+                description="Refine os filtros ou cadastre um novo veiculo para continuar."
+              />
             ) : (
               items.map((item) => (
                 <CTableRow key={item.id}>
-                  <CTableDataCell>{item.placa}</CTableDataCell>
+                  <CTableDataCell>
+                    <div className="fw-semibold">{item.placa}</div>
+                    {item.ano_modelo ? <small className="text-body-secondary">Ano {item.ano_modelo}</small> : null}
+                  </CTableDataCell>
                   <CTableDataCell>{item.tipo_veiculo}</CTableDataCell>
                   <CTableDataCell>{item.tipo_carroceria || '-'}</CTableDataCell>
                   <CTableDataCell>{item.transporter_nome_fantasia || item.transporter_razao_social}</CTableDataCell>
@@ -55,7 +59,7 @@ const VehicleTable = ({ items, onDelete }) => {
                       <CButton color="info" variant="outline" size="sm" as={Link} to={`/registry/vehicles/${item.id}/edit`}>
                         Editar
                       </CButton>
-                      <CButton color="danger" variant="outline" size="sm" onClick={() => onDelete(item)}>
+                      <CButton color="danger" variant="ghost" size="sm" onClick={() => onDelete(item)}>
                         Excluir
                       </CButton>
                     </div>

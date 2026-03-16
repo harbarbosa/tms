@@ -12,12 +12,11 @@ import {
   CFormTextarea,
   CRow,
 } from '@coreui/react'
-import { bodyTypes, vehicleTypes } from '../utils/vehicleValidation'
 
 const VehicleForm = ({
   values,
   errors,
-  carriers,
+  options,
   isSubmitting,
   onChange,
   onSubmit,
@@ -38,7 +37,7 @@ const VehicleForm = ({
                 invalid={Boolean(errors.transporter_id)}
               >
                 <option value="">Selecione</option>
-                {carriers.map((carrier) => (
+                {(options.transporters || []).map((carrier) => (
                   <option key={carrier.id} value={carrier.id}>
                     {carrier.nome_fantasia || carrier.razao_social}
                   </option>
@@ -65,7 +64,7 @@ const VehicleForm = ({
                 invalid={Boolean(errors.tipo_veiculo)}
               >
                 <option value="">Selecione</option>
-                {vehicleTypes.map((type) => (
+                {(options.vehicleTypeOptions || []).map((type) => (
                   <option key={type} value={type}>
                     {type}
                   </option>
@@ -77,7 +76,7 @@ const VehicleForm = ({
               <CFormLabel>Tipo de carroceria</CFormLabel>
               <CFormSelect name="tipo_carroceria" value={values.tipo_carroceria} onChange={onChange}>
                 <option value="">Selecione</option>
-                {bodyTypes.map((type) => (
+                {(options.bodyTypeOptions || []).map((type) => (
                   <option key={type} value={type}>
                     {type}
                   </option>
@@ -91,8 +90,11 @@ const VehicleForm = ({
             <CCol md={2}>
               <CFormLabel>Status</CFormLabel>
               <CFormSelect name="status" value={values.status} onChange={onChange} invalid={Boolean(errors.status)}>
-                <option value="active">Ativo</option>
-                <option value="inactive">Inativo</option>
+                {(options.statusOptions || []).map((status) => (
+                  <option key={status} value={status}>
+                    {status === 'active' ? 'Ativo' : status === 'inactive' ? 'Inativo' : status}
+                  </option>
+                ))}
               </CFormSelect>
               {errors.status ? <div className="invalid-feedback d-block">{errors.status}</div> : null}
             </CCol>

@@ -47,6 +47,7 @@ import {
 
 import { AppBreadcrumb } from './index'
 import { AppHeaderDropdown } from './header/index'
+import getDefaultHomePath from '../utils/homePaths'
 
 /**
  * AppHeader functional component
@@ -65,6 +66,10 @@ const AppHeader = () => {
 
   const dispatch = useDispatch()
   const sidebarShow = useSelector((state) => state.sidebarShow)
+  const user = useSelector((state) => state.auth.user)
+  const isCarrierPortal = user?.role === 'carrier'
+  const isDriverPortal = user?.role === 'driver'
+  const homePath = getDefaultHomePath(user)
 
   useEffect(() => {
     const handleScroll = () => {
@@ -87,34 +92,70 @@ const AppHeader = () => {
         </CHeaderToggler>
         <CHeaderNav className="d-none d-md-flex">
           <CNavItem>
-            <CNavLink to="/dashboard" as={NavLink}>
-              Dashboard
+            <CNavLink to={homePath} as={NavLink}>
+              {isCarrierPortal || isDriverPortal ? 'Portal' : 'Dashboard'}
             </CNavLink>
           </CNavItem>
           <CNavItem>
-            <CNavLink to="/operations/transport-orders" as={NavLink}>
-              Operacao
+            <CNavLink
+              to={
+                isCarrierPortal
+                  ? '/operations/freight-quotations'
+                  : isDriverPortal
+                    ? '/operations/transport-documents'
+                    : '/operations/transport-orders'
+              }
+              as={NavLink}
+            >
+              {isCarrierPortal ? 'Cotacoes' : isDriverPortal ? 'Viagens' : 'Operacao'}
             </CNavLink>
           </CNavItem>
           <CNavItem>
-            <CNavLink to="/financial" as={NavLink}>
-              Financeiro
+            <CNavLink
+              to={
+                isCarrierPortal
+                  ? '/operations/transport-documents'
+                  : isDriverPortal
+                    ? '/execution/delivery-tracking'
+                    : '/financial'
+              }
+              as={NavLink}
+            >
+              {isCarrierPortal ? 'Viagens' : isDriverPortal ? 'Rastreamento' : 'Financeiro'}
             </CNavLink>
           </CNavItem>
         </CHeaderNav>
         <CHeaderNav className="ms-auto">
           <CNavItem>
-            <CNavLink to="/registry/carriers" as={NavLink}>
+            <CNavLink
+              to={
+                isCarrierPortal
+                  ? '/execution/trip-documents'
+                  : isDriverPortal
+                    ? '/execution/trip-documents'
+                    : '/registry/carriers'
+              }
+              as={NavLink}
+            >
               <CIcon icon={cilFactory} size="lg" />
             </CNavLink>
           </CNavItem>
           <CNavItem>
-            <CNavLink to="/execution/delivery-tracking" as={NavLink}>
+            <CNavLink to={isDriverPortal ? '/execution/incidents' : '/execution/delivery-tracking'} as={NavLink}>
               <CIcon icon={cilTruck} size="lg" />
             </CNavLink>
           </CNavItem>
           <CNavItem>
-            <CNavLink to="/admin/users" as={NavLink}>
+            <CNavLink
+              to={
+                isCarrierPortal
+                  ? '/operations/transport-documents'
+                  : isDriverPortal
+                    ? '/execution/proof-of-deliveries'
+                    : '/admin/users'
+              }
+              as={NavLink}
+            >
               <CIcon icon={cilUser} size="lg" />
             </CNavLink>
           </CNavItem>

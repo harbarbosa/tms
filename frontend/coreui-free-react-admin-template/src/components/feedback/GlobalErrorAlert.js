@@ -14,10 +14,11 @@ const GlobalErrorAlert = () => {
     <CAlert
       color="danger"
       dismissible
-      className="mb-4"
+      className="mb-4 shadow-sm border-0"
       onClose={() => dispatch({ type: 'app/clearError' })}
     >
-      {errorMessage}
+      <div className="fw-semibold mb-1">Nao foi possivel concluir a acao.</div>
+      <div>{errorMessage}</div>
     </CAlert>
   )
 }

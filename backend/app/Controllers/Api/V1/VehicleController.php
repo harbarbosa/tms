@@ -4,15 +4,19 @@ namespace App\Controllers\Api\V1;
 
 use App\Models\CarrierModel;
 use App\Models\VehicleModel;
+use App\Services\SystemCatalogService;
 use App\Validation\VehicleValidation;
 
 class VehicleController extends BaseApiController
 {
     private CarrierModel $carriers;
 
+    private SystemCatalogService $catalogService;
+
     public function __construct(private readonly VehicleModel $vehicles = new VehicleModel())
     {
         $this->carriers = new CarrierModel();
+        $this->catalogService = new SystemCatalogService();
     }
 
     public function index()
@@ -79,6 +83,24 @@ class VehicleController extends BaseApiController
         $vehicle = $this->findVehicleOrFail($id);
 
         return $this->respondSuccess($vehicle, 'Veiculo carregado com sucesso.');
+    }
+
+    public function options()
+    {
+        $this->requirePermission('vehicles.view');
+        $companyId = (int) ($this->authContext->getCompany()['id'] ?? 0);
+        $catalogs = $this->catalogService->groupedOptions($companyId, ['vehicle_types', 'body_types']);
+
+        return $this->respondSuccess([
+            'transporters' => $this->carriers
+                ->select('id, razao_social, nome_fantasia, status')
+                ->where('company_id', $companyId)
+                ->orderBy('razao_social', 'ASC')
+                ->findAll(),
+            'vehicleTypeOptions' => array_map(static fn (array $item): string => $item['label'], $catalogs['vehicle_types'] ?? []),
+            'bodyTypeOptions' => array_map(static fn (array $item): string => $item['label'], $catalogs['body_types'] ?? []),
+            'statusOptions' => ['active', 'inactive'],
+        ], 'Opcoes de veiculo carregadas com sucesso.');
     }
 
     public function create()

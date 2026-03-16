@@ -4,6 +4,7 @@ namespace App\Controllers\Api\V1;
 
 use App\Models\IncidentModel;
 use App\Models\TransportDocumentModel;
+use App\Services\SystemCatalogService;
 use App\Validation\TrackingValidation;
 use CodeIgniter\Exceptions\PageNotFoundException;
 
@@ -15,9 +16,12 @@ class IncidentController extends BaseApiController
 
     private TransportDocumentModel $documents;
 
+    private SystemCatalogService $catalogService;
+
     public function __construct(private readonly IncidentModel $incidents = new IncidentModel())
     {
         $this->documents = new TransportDocumentModel();
+        $this->catalogService = new SystemCatalogService();
     }
 
     public function index()
@@ -82,6 +86,10 @@ class IncidentController extends BaseApiController
     {
         $this->requirePermission('incidents.view');
         $companyId = (int) ($this->authContext->getCompany()['id'] ?? 0);
+        $typeOptions = array_map(
+            static fn (array $item): string => $item['label'],
+            $this->catalogService->getCatalogItems($companyId, 'incident_types')
+        );
 
         $documentsBuilder = $this->documents
             ->select('id, numero_ot, status, transporter_id, driver_id')
@@ -92,7 +100,7 @@ class IncidentController extends BaseApiController
 
         return $this->respondSuccess([
             'transport_documents' => $documentsBuilder->findAll(),
-            'typeOptions' => self::TYPES,
+            'typeOptions' => $typeOptions,
             'statusOptions' => self::STATUSES,
         ], 'Opcoes de ocorrencia carregadas com sucesso.');
     }
@@ -118,7 +126,7 @@ class IncidentController extends BaseApiController
         $data = $this->sanitizePayload($payload);
         $data['company_id'] = $companyId;
 
-        if (! $this->documents->where('company_id', $companyId)->find((int) $data['transport_document_id'])) {
+        if ($this->findOwnedTransportDocument((int) $data['transport_document_id'], $companyId) === null) {
             return $this->respondError('Nao foi possivel salvar a ocorrencia.', [
                 'transport_document_id' => 'A ordem de transporte informada nao pertence a empresa atual.',
             ], 422);
@@ -142,7 +150,7 @@ class IncidentController extends BaseApiController
         $data = $this->sanitizePayload($payload);
         $data['company_id'] = (int) $incident['company_id'];
 
-        if (! $this->documents->where('company_id', $data['company_id'])->find((int) $data['transport_document_id'])) {
+        if ($this->findOwnedTransportDocument((int) $data['transport_document_id'], (int) $data['company_id']) === null) {
             return $this->respondError('Nao foi possivel atualizar a ocorrencia.', [
                 'transport_document_id' => 'A ordem de transporte informada nao pertence a empresa atual.',
             ], 422);
@@ -225,5 +233,17 @@ class IncidentController extends BaseApiController
         if ($role === 'driver') {
             $builder->where('driver_id', (int) ($scope['driver_id'] ?? 0));
         }
+    }
+
+    private function findOwnedTransportDocument(int $id, int $companyId): ?array
+    {
+        $builder = $this->documents
+            ->select('transport_documents.*')
+            ->where('transport_documents.company_id', $companyId)
+            ->where('transport_documents.id', $id);
+
+        $this->applyIncidentScope($builder);
+
+        return $builder->first();
     }
 }

@@ -1,7 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 import {
-  CBadge,
   CCard,
   CCardBody,
   CCardHeader,
@@ -10,6 +9,7 @@ import {
   CListGroupItem,
   CRow,
 } from '@coreui/react'
+import CrudStatusBadge from '../../../components/crud/CrudStatusBadge'
 
 const QuickLists = ({ lists }) => {
   const cards = [
@@ -22,7 +22,7 @@ const QuickLists = ({ lists }) => {
           <div className="small text-body-secondary">{item.numero_ot}</div>
         </>
       ),
-      badge: (item) => <CBadge color={item.status === 'aberta' ? 'danger' : 'warning'}>{item.status}</CBadge>,
+      badge: (item) => <CrudStatusBadge status={item.status} />,
       to: '/execution/incidents',
     },
     {
@@ -34,7 +34,7 @@ const QuickLists = ({ lists }) => {
           <div className="small text-body-secondary">{item.nome_recebedor}</div>
         </>
       ),
-      badge: (item) => <CBadge color="success">{new Date(item.data_entrega_real).toLocaleDateString('pt-BR')}</CBadge>,
+      badge: () => <CrudStatusBadge status="entregue" />,
       to: '/execution/proof-of-deliveries',
     },
     {
@@ -46,7 +46,7 @@ const QuickLists = ({ lists }) => {
           <div className="small text-body-secondary">{item.transporter_name}</div>
         </>
       ),
-      badge: (item) => <CBadge color="info">{item.status}</CBadge>,
+      badge: (item) => <CrudStatusBadge status={item.status} />,
       to: '/operations/transport-documents',
     },
   ]
@@ -65,7 +65,10 @@ const QuickLists = ({ lists }) => {
             <CCardBody>
               <CListGroup flush>
                 {card.items.length === 0 ? (
-                  <CListGroupItem className="px-0 text-body-secondary">Sem registros no periodo.</CListGroupItem>
+                  <CListGroupItem className="px-0 py-4 text-center">
+                    <div className="fw-semibold mb-1">Nenhum registro recente</div>
+                    <div className="small text-body-secondary">Os itens aparecerao aqui conforme o fluxo operacional avancar.</div>
+                  </CListGroupItem>
                 ) : (
                   card.items.map((item) => (
                     <CListGroupItem key={item.id} className="px-0 d-flex justify-content-between align-items-start gap-2">

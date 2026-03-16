@@ -21,7 +21,7 @@ const TrackingEventForm = ({ values, errors, isSubmitting, onChange, onSubmit })
       <CCardBody>
         <CForm onSubmit={onSubmit}>
           <CRow className="g-3">
-            <CCol md={4}>
+            <CCol md={12}>
               <CFormLabel>Status</CFormLabel>
               <CFormSelect name="status" value={values.status} onChange={onChange} invalid={Boolean(errors.status)}>
                 {trackingStatuses.map((status) => (
@@ -32,12 +32,12 @@ const TrackingEventForm = ({ values, errors, isSubmitting, onChange, onSubmit })
               </CFormSelect>
               {errors.status ? <div className="invalid-feedback d-block">{errors.status}</div> : null}
             </CCol>
-            <CCol md={4}>
+            <CCol md={12}>
               <CFormLabel>Data e hora</CFormLabel>
               <CFormInput type="datetime-local" name="event_at" value={values.event_at} onChange={onChange} invalid={Boolean(errors.event_at)} />
               {errors.event_at ? <div className="invalid-feedback d-block">{errors.event_at}</div> : null}
             </CCol>
-            <CCol md={4}>
+            <CCol md={12}>
               <CFormLabel>Referencia de anexo futuro</CFormLabel>
               <CFormInput name="attachment_path" value={values.attachment_path} onChange={onChange} placeholder="Ex.: uploads/foto.jpg" />
             </CCol>
@@ -47,7 +47,7 @@ const TrackingEventForm = ({ values, errors, isSubmitting, onChange, onSubmit })
             </CCol>
           </CRow>
           <div className="mt-4 d-flex justify-content-end">
-            <CButton color="primary" type="submit" disabled={isSubmitting}>
+            <CButton color="primary" className="tms-mobile-submit" type="submit" disabled={isSubmitting}>
               {isSubmitting ? 'Salvando...' : 'Registrar evento'}
             </CButton>
           </div>

@@ -1,6 +1,21 @@
 import React from 'react'
 
 const DashboardPage = React.lazy(() => import('../../features/dashboard/pages/DashboardPage'))
+const CarrierPortalDashboardPage = React.lazy(
+  () => import('../../features/carrier-portal/pages/CarrierPortalDashboardPage'),
+)
+const DriverPortalDashboardPage = React.lazy(
+  () => import('../../features/driver-portal/pages/DriverPortalDashboardPage'),
+)
+const CompanyListPage = React.lazy(() => import('../../features/companies/pages/CompanyListPage'))
+const CompanyFormPage = React.lazy(() => import('../../features/companies/pages/CompanyFormPage'))
+const CompanyDetailsPage = React.lazy(() => import('../../features/companies/pages/CompanyDetailsPage'))
+const UserListPage = React.lazy(() => import('../../features/users/pages/UserListPage'))
+const UserFormPage = React.lazy(() => import('../../features/users/pages/UserFormPage'))
+const UserDetailsPage = React.lazy(() => import('../../features/users/pages/UserDetailsPage'))
+const RoleListPage = React.lazy(() => import('../../features/roles/pages/RoleListPage'))
+const RoleFormPage = React.lazy(() => import('../../features/roles/pages/RoleFormPage'))
+const PermissionMatrixPage = React.lazy(() => import('../../features/permissions/pages/PermissionMatrixPage'))
 const CarrierListPage = React.lazy(() => import('../../features/carriers/pages/CarrierListPage'))
 const CarrierFormPage = React.lazy(() => import('../../features/carriers/pages/CarrierFormPage'))
 const DriverListPage = React.lazy(() => import('../../features/drivers/pages/DriverListPage'))
@@ -28,6 +43,15 @@ const FreightQuotationFormPage = React.lazy(
 const FreightQuotationDetailsPage = React.lazy(
   () => import('../../features/freight-quotations/pages/FreightQuotationDetailsPage'),
 )
+const FreightHiringListPage = React.lazy(
+  () => import('../../features/freight-hirings/pages/FreightHiringListPage'),
+)
+const FreightHiringFormPage = React.lazy(
+  () => import('../../features/freight-hirings/pages/FreightHiringFormPage'),
+)
+const FreightHiringDetailsPage = React.lazy(
+  () => import('../../features/freight-hirings/pages/FreightHiringDetailsPage'),
+)
 const TransportDocumentListPage = React.lazy(
   () => import('../../features/transport-documents/pages/TransportDocumentListPage'),
 )
@@ -36,6 +60,24 @@ const TransportDocumentFormPage = React.lazy(
 )
 const TransportDocumentDetailsPage = React.lazy(
   () => import('../../features/transport-documents/pages/TransportDocumentDetailsPage'),
+)
+const PickupScheduleListPage = React.lazy(
+  () => import('../../features/pickup-schedules/pages/PickupScheduleListPage'),
+)
+const PickupScheduleFormPage = React.lazy(
+  () => import('../../features/pickup-schedules/pages/PickupScheduleFormPage'),
+)
+const PickupScheduleDetailsPage = React.lazy(
+  () => import('../../features/pickup-schedules/pages/PickupScheduleDetailsPage'),
+)
+const VehicleCheckinListPage = React.lazy(
+  () => import('../../features/vehicle-checkins/pages/VehicleCheckinListPage'),
+)
+const VehicleCheckinFormPage = React.lazy(
+  () => import('../../features/vehicle-checkins/pages/VehicleCheckinFormPage'),
+)
+const VehicleCheckinDetailsPage = React.lazy(
+  () => import('../../features/vehicle-checkins/pages/VehicleCheckinDetailsPage'),
 )
 const DeliveryTrackingListPage = React.lazy(
   () => import('../../features/delivery-tracking/pages/DeliveryTrackingListPage'),
@@ -66,9 +108,18 @@ const FreightAuditFormPage = React.lazy(
 const FreightAuditDetailsPage = React.lazy(
   () => import('../../features/freight-audits/pages/FreightAuditDetailsPage'),
 )
-const ModulePlaceholderPage = React.lazy(
-  () => import('../../features/shared/pages/ModulePlaceholderPage'),
+const FinancialDashboardPage = React.lazy(
+  () => import('../../features/financial/pages/FinancialDashboardPage'),
 )
+const FinancialFormPage = React.lazy(
+  () => import('../../features/financial/pages/FinancialFormPage'),
+)
+const FinancialDetailsPage = React.lazy(
+  () => import('../../features/financial/pages/FinancialDetailsPage'),
+)
+const ReportsPage = React.lazy(() => import('../../features/reports/pages/ReportsPage'))
+const SettingsPage = React.lazy(() => import('../../features/settings/pages/SettingsPage'))
+const ModulePlaceholderPage = React.lazy(() => import('../../features/shared/pages/ModulePlaceholderPage'))
 
 const createPlaceholderElement = (title, description) => {
   const PlaceholderRoute = () => <ModulePlaceholderPage title={title} description={description} />
@@ -79,33 +130,20 @@ const createPlaceholderElement = (title, description) => {
 const privateRoutes = [
   { path: '/', exact: true, name: 'Home' },
   { path: '/dashboard', name: 'Dashboard', element: DashboardPage, permission: 'dashboard.view' },
-  {
-    path: '/admin/companies',
-    name: 'Empresas',
-    permission: 'companies.view',
-    element: createPlaceholderElement(
-      'Empresas',
-      'Base pronta para cadastro multiempresa, filiais e contexto do tenant.',
-    ),
-  },
-  {
-    path: '/admin/users',
-    name: 'Usuarios',
-    permission: 'users.view',
-    element: createPlaceholderElement(
-      'Usuarios',
-      'Modulo preparado para usuarios, vinculos por empresa e perfis operacionais.',
-    ),
-  },
-  {
-    path: '/admin/roles',
-    name: 'Perfis e Permissoes',
-    permission: 'roles.view',
-    element: createPlaceholderElement(
-      'Perfis e Permissoes',
-      'Estrutura pronta para RBAC com papeis, permissoes e grupos de acesso.',
-    ),
-  },
+  { path: '/carrier/dashboard', name: 'Portal da Transportadora', element: CarrierPortalDashboardPage, permission: 'freight_quotations.view' },
+  { path: '/driver/dashboard', name: 'Portal do Motorista', element: DriverPortalDashboardPage, permission: 'dashboard.view' },
+  { path: '/admin/companies', name: 'Empresas', permission: 'companies.view', element: CompanyListPage },
+  { path: '/admin/companies/new', name: 'Nova Empresa', permission: 'companies.manage', element: CompanyFormPage },
+  { path: '/admin/companies/:id', name: 'Detalhes da Empresa', permission: 'companies.view', element: CompanyDetailsPage },
+  { path: '/admin/companies/:id/edit', name: 'Editar Empresa', permission: 'companies.manage', element: CompanyFormPage },
+  { path: '/admin/users', name: 'Usuarios', permission: 'users.view', element: UserListPage },
+  { path: '/admin/users/new', name: 'Novo Usuario', permission: 'users.manage', element: UserFormPage },
+  { path: '/admin/users/:id', name: 'Detalhes do Usuario', permission: 'users.view', element: UserDetailsPage },
+  { path: '/admin/users/:id/edit', name: 'Editar Usuario', permission: 'users.manage', element: UserFormPage },
+  { path: '/admin/roles', name: 'Perfis', permission: 'roles.view', element: RoleListPage },
+  { path: '/admin/roles/new', name: 'Novo Perfil', permission: 'roles.manage', element: RoleFormPage },
+  { path: '/admin/roles/:id/edit', name: 'Editar Perfil', permission: 'roles.manage', element: RoleFormPage },
+  { path: '/admin/permissions', name: 'Permissoes', permission: 'permissions.view', element: PermissionMatrixPage },
   {
     path: '/registry/shippers',
     name: 'Embarcadores',
@@ -135,34 +173,22 @@ const privateRoutes = [
   { path: '/operations/freight-quotations/new', name: 'Nova Cotacao de Frete', element: FreightQuotationFormPage, permission: 'freight_quotations.create' },
   { path: '/operations/freight-quotations/:id', name: 'Detalhes da Cotacao', element: FreightQuotationDetailsPage, permission: 'freight_quotations.view' },
   { path: '/operations/freight-quotations/:id/edit', name: 'Editar Cotacao', element: FreightQuotationFormPage, permission: 'freight_quotations.update' },
-  {
-    path: '/operations/freight-hirings',
-    name: 'Contratacao de Frete',
-    element: createPlaceholderElement(
-      'Contratacao de Frete',
-      'Area pronta para fechamento de frete e aceite da transportadora.',
-    ),
-  },
+  { path: '/operations/freight-hirings', name: 'Contratacao de Frete', element: FreightHiringListPage, permission: 'freight_hirings.view' },
+  { path: '/operations/freight-hirings/new', name: 'Nova Contratacao de Frete', element: FreightHiringFormPage, permission: 'freight_hirings.create' },
+  { path: '/operations/freight-hirings/:id', name: 'Detalhes da Contratacao', element: FreightHiringDetailsPage, permission: 'freight_hirings.view' },
+  { path: '/operations/freight-hirings/:id/edit', name: 'Editar Contratacao de Frete', element: FreightHiringFormPage, permission: 'freight_hirings.update' },
   { path: '/operations/transport-documents', name: 'Ordem de Transporte', element: TransportDocumentListPage, permission: 'transport_documents.view' },
   { path: '/operations/transport-documents/new', name: 'Nova Ordem de Transporte', element: TransportDocumentFormPage, permission: 'transport_documents.create' },
   { path: '/operations/transport-documents/:id', name: 'Detalhes da OT', element: TransportDocumentDetailsPage, permission: 'transport_documents.view' },
   { path: '/operations/transport-documents/:id/edit', name: 'Editar OT', element: TransportDocumentFormPage, permission: 'transport_documents.update' },
-  {
-    path: '/execution/pickup-schedules',
-    name: 'Agendamento de Coleta',
-    element: createPlaceholderElement(
-      'Agendamento de Coleta',
-      'Tela preparada para slots de coleta, confirmacao e replanejamento.',
-    ),
-  },
-  {
-    path: '/execution/vehicle-checkins',
-    name: 'Check-in de Veiculo',
-    element: createPlaceholderElement(
-      'Check-in de Veiculo',
-      'Estrutura prevista para gate, validacoes e conferencia documental.',
-    ),
-  },
+  { path: '/execution/pickup-schedules', name: 'Agendamento de Coleta', element: PickupScheduleListPage, permission: 'pickup_schedules.view' },
+  { path: '/execution/pickup-schedules/new', name: 'Novo Agendamento de Coleta', element: PickupScheduleFormPage, permission: 'pickup_schedules.create' },
+  { path: '/execution/pickup-schedules/:id', name: 'Detalhes do Agendamento', element: PickupScheduleDetailsPage, permission: 'pickup_schedules.view' },
+  { path: '/execution/pickup-schedules/:id/edit', name: 'Editar Agendamento de Coleta', element: PickupScheduleFormPage, permission: 'pickup_schedules.update' },
+  { path: '/execution/vehicle-checkins', name: 'Check-in de Veiculo', element: VehicleCheckinListPage, permission: 'vehicle_checkins.view' },
+  { path: '/execution/vehicle-checkins/new', name: 'Novo Check-in de Veiculo', element: VehicleCheckinFormPage, permission: 'vehicle_checkins.create' },
+  { path: '/execution/vehicle-checkins/:id', name: 'Detalhes do Check-in', element: VehicleCheckinDetailsPage, permission: 'vehicle_checkins.view' },
+  { path: '/execution/vehicle-checkins/:id/edit', name: 'Editar Check-in de Veiculo', element: VehicleCheckinFormPage, permission: 'vehicle_checkins.update' },
   { path: '/execution/delivery-tracking', name: 'Rastreamento de Entrega', element: DeliveryTrackingListPage, permission: 'delivery_tracking.view' },
   { path: '/execution/delivery-tracking/:id', name: 'Detalhes do Rastreamento', element: DeliveryTrackingDetailsPage, permission: 'delivery_tracking.view' },
   { path: '/execution/incidents', name: 'Ocorrencias', element: IncidentListPage, permission: 'incidents.view' },
@@ -177,32 +203,21 @@ const privateRoutes = [
   { path: '/control/freight-audits/new', name: 'Nova Auditoria de Frete', element: FreightAuditFormPage, permission: 'freight_audits.create' },
   { path: '/control/freight-audits/:id', name: 'Detalhes da Auditoria', element: FreightAuditDetailsPage, permission: 'freight_audits.view' },
   { path: '/control/freight-audits/:id/edit', name: 'Editar Auditoria', element: FreightAuditFormPage, permission: 'freight_audits.update' },
-  {
-    path: '/financial',
-    name: 'Financeiro',
-    permission: 'financial.view',
-    element: createPlaceholderElement(
-      'Financeiro',
-      'Area destinada a faturamento, repasse, contas e conciliacao.',
-    ),
-  },
+  { path: '/financial', name: 'Financeiro', permission: 'financial.view', element: FinancialDashboardPage },
+  { path: '/financial/new', name: 'Novo Lancamento Financeiro', permission: 'financial.create', element: FinancialFormPage },
+  { path: '/financial/:id', name: 'Detalhe Financeiro', permission: 'financial.view', element: FinancialDetailsPage },
+  { path: '/financial/:id/edit', name: 'Editar Lancamento Financeiro', permission: 'financial.update', element: FinancialFormPage },
   {
     path: '/reports',
     name: 'Relatorios',
     permission: 'reports.view',
-    element: createPlaceholderElement(
-      'Relatorios',
-      'Espaco preparado para analytics, indicadores e exportacoes.',
-    ),
+    element: ReportsPage,
   },
   {
     path: '/settings',
     name: 'Configuracoes do Sistema',
     permission: 'settings.view',
-    element: createPlaceholderElement(
-      'Configuracoes do Sistema',
-      'Modulo futuro para parametros gerais, integracoes e preferencias.',
-    ),
+    element: SettingsPage,
   },
 ]
 

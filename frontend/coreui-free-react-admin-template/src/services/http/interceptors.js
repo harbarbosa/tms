@@ -7,6 +7,7 @@ const isJsonSerializable = (body) =>
 
 const normalizeRequest = async (config) => {
   const token = authStorage.getToken()
+  const session = authStorage.getSession()
   const headers = new Headers(config.headers || {})
 
   headers.set('Accept', 'application/json')
@@ -14,6 +15,10 @@ const normalizeRequest = async (config) => {
 
   if (token) {
     headers.set('Authorization', `Bearer ${token}`)
+  }
+
+  if (session?.user?.company?.id) {
+    headers.set('X-Company-Id', String(session.user.company.id))
   }
 
   if (isJsonSerializable(config.body)) {
@@ -27,7 +32,15 @@ const normalizeRequest = async (config) => {
   }
 }
 
-const handleResponse = async ({ path, response, data }) => {
+const handleResponse = async ({ path, response, data, error }) => {
+  if (!response) {
+    store.dispatch({
+      type: 'app/setError',
+      payload: error?.message || 'Nao foi possivel comunicar com a API.',
+    })
+    return
+  }
+
   if (response.ok) {
     return
   }
@@ -55,7 +68,10 @@ const handleResponse = async ({ path, response, data }) => {
 
   store.dispatch({
     type: 'app/setError',
-    payload: data?.message || data?.messages?.error || 'Ocorreu um erro inesperado.',
+    payload:
+      data?.message ||
+      data?.messages?.error ||
+      'Ocorreu um erro inesperado ao comunicar com o servidor.',
   })
 }
 

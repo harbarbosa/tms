@@ -14,6 +14,7 @@ class UserModel extends BaseModel
         'uuid',
         'name',
         'email',
+        'telefone',
         'password_hash',
         'carrier_id',
         'driver_id',
@@ -26,5 +27,18 @@ class UserModel extends BaseModel
         return $this->where('email', $email)
             ->where('status', 'active')
             ->first();
+    }
+
+    public function existsByEmail(string $email, ?int $ignoreId = null): bool
+    {
+        $builder = $this->builder()
+            ->where('email', $email)
+            ->where('deleted_at', null);
+
+        if ($ignoreId !== null) {
+            $builder->where('id !=', $ignoreId);
+        }
+
+        return (bool) $builder->countAllResults();
     }
 }

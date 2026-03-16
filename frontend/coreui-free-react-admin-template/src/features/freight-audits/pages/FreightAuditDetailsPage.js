@@ -61,6 +61,15 @@ const FreightAuditDetailsPage = () => {
         <CButton color="dark" variant="outline" as={Link} to={`/operations/transport-documents/${audit.ordem_transporte_id}`}>
           Ver OT
         </CButton>
+        {audit.summary?.financial_entry?.id ? (
+          <CButton color="primary" variant="outline" as={Link} to={`/financial/${audit.summary.financial_entry.id}`}>
+            Ver financeiro
+          </CButton>
+        ) : (
+          <CButton color="primary" variant="outline" as={Link} to={`/financial/new?audit_id=${audit.id}`}>
+            Gerar financeiro
+          </CButton>
+        )}
       </div>
       {isDivergence ? (
         <CAlert color="danger">
@@ -132,6 +141,10 @@ const FreightAuditDetailsPage = () => {
                 <CListGroupItem className="px-0 d-flex justify-content-between">
                   <span>Status da OT</span>
                   <span>{audit.ordem_status || '-'}</span>
+                </CListGroupItem>
+                <CListGroupItem className="px-0 d-flex justify-content-between">
+                  <span>Financeiro</span>
+                  <span>{audit.summary?.financial_entry?.id ? 'Gerado' : 'Pendente'}</span>
                 </CListGroupItem>
               </CListGroup>
             </CCardBody>

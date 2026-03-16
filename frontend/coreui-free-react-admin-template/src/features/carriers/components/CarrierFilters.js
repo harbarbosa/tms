@@ -11,8 +11,14 @@ import {
 
 const CarrierFilters = ({ filters, onChange, onSearch, onReset }) => {
   return (
-    <CCard className="mb-4">
+    <CCard className="mb-4 shadow-sm border-0">
       <CCardBody>
+        <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+          <div>
+            <div className="fw-semibold">Filtros</div>
+            <div className="small text-body-secondary">Refine a listagem por busca, status e volume por pagina.</div>
+          </div>
+        </div>
         <CRow className="g-3 align-items-end">
           <CCol md={5}>
             <label className="form-label">Buscar</label>
@@ -43,7 +49,7 @@ const CarrierFilters = ({ filters, onChange, onSearch, onReset }) => {
             <CButton color="primary" className="w-100" onClick={onSearch}>
               Filtrar
             </CButton>
-            <CButton color="secondary" variant="outline" className="w-100" onClick={onReset}>
+            <CButton color="secondary" variant="ghost" className="w-100" onClick={onReset}>
               Limpar
             </CButton>
           </CCol>

@@ -8,6 +8,7 @@ const statusMap = {
   em_planejamento: { color: 'info', label: 'Em planejamento' },
   cotacao: { color: 'primary', label: 'Cotacao' },
   contratado: { color: 'info', label: 'Contratado' },
+  convertido_em_ot: { color: 'success', label: 'Convertido em OT' },
   em_transporte: { color: 'primary', label: 'Em transporte' },
   entregue: { color: 'success', label: 'Entregue' },
   cancelado: { color: 'danger', label: 'Cancelado' },
@@ -23,6 +24,17 @@ const statusMap = {
   aprovada: { color: 'success', label: 'Aprovada' },
   expirada: { color: 'dark', label: 'Expirada' },
   programada: { color: 'info', label: 'Programada' },
+  agendado: { color: 'secondary', label: 'Agendado' },
+  confirmado: { color: 'info', label: 'Confirmado' },
+  em_atendimento: { color: 'warning', label: 'Em atendimento' },
+  concluido: { color: 'success', label: 'Concluido' },
+  ausente: { color: 'danger', label: 'Ausente' },
+  aguardando: { color: 'secondary', label: 'Aguardando' },
+  chegou: { color: 'info', label: 'Chegou' },
+  em_doca: { color: 'warning', label: 'Em doca' },
+  carregando: { color: 'primary', label: 'Carregando' },
+  finalizado: { color: 'success', label: 'Finalizado' },
+  recusado: { color: 'danger', label: 'Recusado' },
   em_coleta: { color: 'warning', label: 'Em coleta' },
   em_transito: { color: 'primary', label: 'Em transito' },
   finalizada: { color: 'success', label: 'Finalizada' },
@@ -34,12 +46,27 @@ const statusMap = {
   em_tratativa: { color: 'warning', label: 'Em tratativa' },
   resolvida: { color: 'success', label: 'Resolvida' },
   divergente: { color: 'danger', label: 'Divergente' },
+  bloqueado: { color: 'danger', label: 'Bloqueado' },
+  liberado: { color: 'info', label: 'Liberado' },
+  pago: { color: 'success', label: 'Pago' },
+  no_prazo: { color: 'success', label: 'No prazo' },
+  fora_do_prazo: { color: 'danger', label: 'Fora do prazo' },
+  critico: { color: 'danger', label: 'Critico' },
 }
 
-const CrudStatusBadge = ({ status }) => {
-  const current = statusMap[status] || { color: 'warning', label: status || 'N/A' }
+const formatFallbackLabel = (status) =>
+  String(status || 'N/A')
+    .replaceAll('_', ' ')
+    .replace(/\b\w/g, (letter) => letter.toUpperCase())
 
-  return <CBadge color={current.color}>{current.label}</CBadge>
+const CrudStatusBadge = ({ status }) => {
+  const current = statusMap[status] || { color: 'warning', label: formatFallbackLabel(status) }
+
+  return (
+    <CBadge color={current.color} shape="rounded-pill" className="px-3 py-2 fw-semibold">
+      {current.label}
+    </CBadge>
+  )
 }
 
 export default CrudStatusBadge

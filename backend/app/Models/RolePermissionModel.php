@@ -24,4 +24,18 @@ class RolePermissionModel extends Model
     protected $createdField = 'created_at';
 
     protected $updatedField = 'updated_at';
+
+    public function syncPermissionsForRole(int $roleId, array $permissionIds): void
+    {
+        $permissionIds = array_values(array_unique(array_map('intval', $permissionIds)));
+
+        $this->where('role_id', $roleId)->delete();
+
+        foreach ($permissionIds as $permissionId) {
+            $this->insert([
+                'role_id' => $roleId,
+                'permission_id' => $permissionId,
+            ]);
+        }
+    }
 }

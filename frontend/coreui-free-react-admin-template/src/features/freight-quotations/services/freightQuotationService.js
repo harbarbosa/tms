@@ -32,6 +32,11 @@ const freightQuotationService = {
     return response.data
   },
 
+  async respondProposal(id, proposalId, payload) {
+    const response = await apiClient.post(`/freight-quotations/${id}/proposals/${proposalId}/respond`, payload)
+    return response.data
+  },
+
   async remove(id) {
     const response = await apiClient.delete(`/freight-quotations/${id}`)
     return response.data

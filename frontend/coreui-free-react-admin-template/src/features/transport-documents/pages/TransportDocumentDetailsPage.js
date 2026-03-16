@@ -49,15 +49,26 @@ const TransportDocumentDetailsPage = () => {
 
   return (
     <>
-      <div className="mb-3 d-flex gap-2">
+      <div className="mb-3 tms-mobile-stack-actions">
         <CButton color="secondary" variant="outline" as={Link} to="/operations/transport-documents">
           Voltar
         </CButton>
+        {document.freight_hiring_id ? (
+          <CButton color="dark" variant="outline" as={Link} to={`/operations/freight-hirings/${document.freight_hiring_id}`}>
+            Ver contratacao
+          </CButton>
+        ) : null}
         <CButton color="info" variant="outline" as={Link} to={`/operations/transport-documents/${document.id}/edit`}>
           Editar OT
         </CButton>
         <CButton color="primary" variant="outline" as={Link} to={`/execution/delivery-tracking/${document.id}`}>
           Ver rastreamento
+        </CButton>
+        <CButton color="secondary" variant="outline" as={Link} to={`/execution/pickup-schedules/new?transport_document_id=${document.id}`}>
+          Agendar coleta
+        </CButton>
+        <CButton color="primary" variant="outline" as={Link} to={`/execution/vehicle-checkins/new?transport_document_id=${document.id}`}>
+          Check-in
         </CButton>
         <CButton color="warning" variant="outline" as={Link} to={`/execution/incidents/new?transport_document_id=${document.id}`}>
           Nova ocorrencia
@@ -70,7 +81,7 @@ const TransportDocumentDetailsPage = () => {
         </CButton>
       </div>
       <CRow className="g-4">
-        <CCol lg={8}>
+        <CCol lg={8} className="order-2 order-lg-1">
           <CCard className="mb-4 shadow-sm border-0">
             <CCardHeader className="d-flex justify-content-between align-items-center">
               <span>{document.numero_ot}</span>
@@ -85,6 +96,10 @@ const TransportDocumentDetailsPage = () => {
                 <CCol md={4}>
                   <strong>Pedido</strong>
                   <div>{document.numero_pedido || '-'}</div>
+                </CCol>
+                <CCol md={4}>
+                  <strong>Contratacao</strong>
+                  <div>{document.freight_hiring_id ? `#${document.freight_hiring_id}` : '-'}</div>
                 </CCol>
                 <CCol md={4}>
                   <strong>Transportadora</strong>
@@ -118,7 +133,7 @@ const TransportDocumentDetailsPage = () => {
             </CCardBody>
           </CCard>
         </CCol>
-        <CCol lg={4}>
+        <CCol lg={4} className="order-1 order-lg-2">
           <CCard className="mb-4 shadow-sm border-0">
             <CCardHeader>Proximos modulos</CCardHeader>
             <CCardBody>

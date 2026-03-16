@@ -20,9 +20,10 @@
 
 import React, { Suspense } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
-import { CContainer, CSpinner } from '@coreui/react'
+import { CContainer } from '@coreui/react'
 import GlobalErrorAlert from './feedback/GlobalErrorAlert'
 import PermissionGuard from './guards/PermissionGuard'
+import CrudLoadingState from './crud/CrudLoadingState'
 
 // routes config
 import routes from '../routes'
@@ -43,7 +44,7 @@ const AppContent = () => {
   return (
     <CContainer className="px-4" lg>
       <GlobalErrorAlert />
-      <Suspense fallback={<CSpinner color="primary" />}>
+      <Suspense fallback={<CrudLoadingState message="Carregando modulo..." />}>
         <Routes>
           {routes.map((route, idx) => {
             return (

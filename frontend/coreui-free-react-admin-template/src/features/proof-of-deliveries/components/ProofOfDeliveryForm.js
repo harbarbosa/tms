@@ -20,7 +20,7 @@ const ProofOfDeliveryForm = ({ values, errors, options, isSubmitting, isEdit, on
       <CCardBody>
         <CForm onSubmit={onSubmit}>
           <CRow className="g-3">
-            <CCol md={4}>
+            <CCol md={12}>
               <CFormLabel>OT</CFormLabel>
               <CFormSelect
                 name="ordem_transporte_id"
@@ -37,7 +37,7 @@ const ProofOfDeliveryForm = ({ values, errors, options, isSubmitting, isEdit, on
               </CFormSelect>
               {errors.ordem_transporte_id ? <div className="invalid-feedback d-block">{errors.ordem_transporte_id}</div> : null}
             </CCol>
-            <CCol md={4}>
+            <CCol md={12} lg={4}>
               <CFormLabel>Data/hora da entrega</CFormLabel>
               <CFormInput
                 type="datetime-local"
@@ -48,16 +48,16 @@ const ProofOfDeliveryForm = ({ values, errors, options, isSubmitting, isEdit, on
               />
               {errors.data_entrega_real ? <div className="invalid-feedback d-block">{errors.data_entrega_real}</div> : null}
             </CCol>
-            <CCol md={4}>
+            <CCol md={12} lg={4}>
               <CFormLabel>Recebedor</CFormLabel>
               <CFormInput name="nome_recebedor" value={values.nome_recebedor} onChange={onChange} invalid={Boolean(errors.nome_recebedor)} />
               {errors.nome_recebedor ? <div className="invalid-feedback d-block">{errors.nome_recebedor}</div> : null}
             </CCol>
-            <CCol md={4}>
+            <CCol md={12} lg={4}>
               <CFormLabel>Documento do recebedor</CFormLabel>
               <CFormInput name="documento_recebedor" value={values.documento_recebedor} onChange={onChange} />
             </CCol>
-            <CCol md={8}>
+            <CCol md={12}>
               <CFormLabel>Arquivo do comprovante</CFormLabel>
               <CFormInput type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={onFileChange} invalid={Boolean(errors.arquivo_comprovante)} />
               {errors.arquivo_comprovante ? <div className="invalid-feedback d-block">{errors.arquivo_comprovante}</div> : null}
@@ -71,7 +71,7 @@ const ProofOfDeliveryForm = ({ values, errors, options, isSubmitting, isEdit, on
             </CCol>
           </CRow>
           <div className="mt-4 d-flex justify-content-end">
-            <CButton color="primary" type="submit" disabled={isSubmitting}>
+            <CButton color="primary" className="tms-mobile-submit" type="submit" disabled={isSubmitting}>
               {isSubmitting ? 'Salvando...' : isEdit ? 'Salvar comprovante' : 'Criar comprovante'}
             </CButton>
           </div>

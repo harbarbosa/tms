@@ -48,4 +48,31 @@ class UserCompanyModel extends Model
             ->where('companies.deleted_at', null)
             ->first();
     }
+
+    public function findCompaniesForUser(int $userId): array
+    {
+        return $this->select('companies.id, companies.name, companies.razao_social, companies.nome_fantasia, user_companies.is_default, user_companies.is_active')
+            ->join('companies', 'companies.id = user_companies.company_id')
+            ->where('user_companies.user_id', $userId)
+            ->where('companies.deleted_at', null)
+            ->orderBy('user_companies.is_default', 'DESC')
+            ->orderBy('companies.name', 'ASC')
+            ->findAll();
+    }
+
+    public function syncUserCompanies(int $userId, array $companyIds, int $defaultCompanyId): void
+    {
+        $companyIds = array_values(array_unique(array_map('intval', $companyIds)));
+
+        $this->where('user_id', $userId)->delete();
+
+        foreach ($companyIds as $companyId) {
+            $this->insert([
+                'user_id' => $userId,
+                'company_id' => $companyId,
+                'is_default' => $companyId === $defaultCompanyId ? 1 : 0,
+                'is_active' => 1,
+            ]);
+        }
+    }
 }

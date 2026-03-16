@@ -20,7 +20,7 @@ const TripDocumentUploadPage = () => {
     arquivo: null,
   })
   const [errors, setErrors] = useState({})
-  const [options, setOptions] = useState({ transport_documents: [] })
+  const [options, setOptions] = useState({ transport_documents: [], typeOptions: [] })
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -28,7 +28,10 @@ const TripDocumentUploadPage = () => {
     const loadOptions = async () => {
       try {
         const data = await tripDocumentService.options()
-        setOptions({ transport_documents: data.transport_documents || [] })
+        setOptions({
+          transport_documents: data.transport_documents || [],
+          typeOptions: data.typeOptions || [],
+        })
       } catch (error) {
         dispatch({ type: 'app/setError', payload: error.message })
       } finally {

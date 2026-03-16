@@ -13,7 +13,7 @@ import {
 
 const formatDateTime = (value) => new Date(value).toLocaleString('pt-BR')
 
-const TripDocumentTable = ({ items, onPreview, onDelete }) => {
+const TripDocumentTable = ({ items, onPreview, onDelete, canDelete = true }) => {
   return (
     <CCard className="mb-4 shadow-sm border-0">
       <CCardBody>
@@ -50,9 +50,11 @@ const TripDocumentTable = ({ items, onPreview, onDelete }) => {
                       <CButton color="secondary" variant="outline" size="sm" onClick={() => onPreview(item.id)}>
                         Visualizar
                       </CButton>
-                      <CButton color="danger" variant="outline" size="sm" onClick={() => onDelete(item)}>
-                        Excluir
-                      </CButton>
+                      {canDelete ? (
+                        <CButton color="danger" variant="outline" size="sm" onClick={() => onDelete(item)}>
+                          Excluir
+                        </CButton>
+                      ) : null}
                     </div>
                   </CTableDataCell>
                 </CTableRow>

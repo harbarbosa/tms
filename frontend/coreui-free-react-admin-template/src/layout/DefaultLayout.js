@@ -21,6 +21,8 @@
 
 import React from 'react'
 import { AppContent, AppSidebar, AppFooter, AppHeader } from '../components/index'
+import MobileOperationsNav from '../components/mobile/MobileOperationsNav'
+import PwaInstallBanner from '../components/mobile/PwaInstallBanner'
 
 /**
  * DefaultLayout functional component
@@ -39,13 +41,15 @@ const DefaultLayout = () => {
   return (
     <div>
       <AppSidebar />
-      <div className="wrapper d-flex flex-column min-vh-100">
+      <div className="wrapper d-flex flex-column min-vh-100 tms-mobile-shell">
         <AppHeader />
         <div className="body flex-grow-1">
+          <PwaInstallBanner />
           <AppContent />
         </div>
         <AppFooter />
       </div>
+      <MobileOperationsNav />
     </div>
   )
 }

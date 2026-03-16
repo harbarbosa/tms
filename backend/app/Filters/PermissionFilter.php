@@ -18,7 +18,15 @@ class PermissionFilter implements FilterInterface
             return null;
         }
 
+        $requestId = $request->getHeaderLine('X-Request-Id') ?: bin2hex(random_bytes(8));
+
+        log_message('notice', 'Permission denied | permission={permission} | path={path}', [
+            'permission' => $requiredPermission,
+            'path' => '/' . trim($request->getUri()->getPath(), '/'),
+        ]);
+
         return Services::response()
+            ->setHeader('X-Request-Id', $requestId)
             ->setStatusCode(403)
             ->setJSON([
                 'success' => false,
@@ -26,6 +34,11 @@ class PermissionFilter implements FilterInterface
                 'data' => null,
                 'errors' => [
                     'permission' => sprintf('Permissao requerida: %s', $requiredPermission),
+                ],
+                'meta' => [
+                    'request_id' => $requestId,
+                    'timestamp' => gmdate('c'),
+                    'path' => '/' . trim($request->getUri()->getPath(), '/'),
                 ],
             ]);
     }

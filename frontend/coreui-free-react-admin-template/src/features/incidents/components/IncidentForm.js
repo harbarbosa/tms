@@ -12,7 +12,7 @@ import {
   CFormTextarea,
   CRow,
 } from '@coreui/react'
-import { incidentStatuses, incidentTypes } from '../utils/incidentValidation'
+import { incidentStatuses } from '../utils/incidentValidation'
 
 const IncidentForm = ({ values, errors, options, isSubmitting, onChange, onSubmit, submitLabel }) => {
   return (
@@ -42,7 +42,7 @@ const IncidentForm = ({ values, errors, options, isSubmitting, onChange, onSubmi
               <CFormLabel>Tipo</CFormLabel>
               <CFormSelect name="tipo_ocorrencia" value={values.tipo_ocorrencia} onChange={onChange} invalid={Boolean(errors.tipo_ocorrencia)}>
                 <option value="">Selecione</option>
-                {incidentTypes.map((type) => (
+                {(options.typeOptions || []).map((type) => (
                   <option key={type} value={type}>
                     {type}
                   </option>
@@ -53,7 +53,7 @@ const IncidentForm = ({ values, errors, options, isSubmitting, onChange, onSubmi
             <CCol md={3}>
               <CFormLabel>Status</CFormLabel>
               <CFormSelect name="status" value={values.status} onChange={onChange} invalid={Boolean(errors.status)}>
-                {incidentStatuses.map((status) => (
+                {(options.statusOptions || incidentStatuses).map((status) => (
                   <option key={status} value={status}>
                     {status}
                   </option>

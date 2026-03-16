@@ -17,7 +17,24 @@ class TmsSeeder extends Seeder
             'slug' => 'empresa-exemplo',
             'legal_name' => 'Empresa Exemplo Logistica Ltda',
             'tax_id' => '12.345.678/0001-99',
+            'razao_social' => 'Empresa Exemplo Logistica Ltda',
+            'nome_fantasia' => 'Empresa Exemplo',
+            'cnpj' => '12.345.678/0001-99',
+            'email' => 'contato@empresaexemplo.com.br',
+            'telefone' => '(11) 3000-1000',
+            'cep' => '04567-000',
+            'endereco' => 'Avenida das Operacoes',
+            'numero' => '1000',
+            'complemento' => '12 andar',
+            'bairro' => 'Vila Olimpia',
+            'cidade' => 'Sao Paulo',
+            'estado' => 'SP',
             'status' => 'active',
+            'tipo_empresa' => 'embarcador',
+            'limite_usuarios' => 50,
+            'limite_transportadoras' => 100,
+            'limite_veiculos' => 300,
+            'limite_motoristas' => 300,
             'settings' => json_encode(['timezone' => 'America/Sao_Paulo']),
         ];
 
@@ -341,6 +358,44 @@ class TmsSeeder extends Seeder
         }
 
         if ($transportDocumentId > 0) {
+            $this->db->table('pickup_schedules')->ignore(true)->insert([
+                'company_id' => $companyId,
+                'transport_document_id' => $transportDocumentId,
+                'transporter_id' => $translogId,
+                'unidade_origem' => 'CD Sao Paulo',
+                'doca' => 'Doca 05',
+                'data_agendada' => '2026-03-18',
+                'hora_inicio' => '08:00',
+                'hora_fim' => '09:30',
+                'janela_atendimento' => '08:00 as 09:30',
+                'responsavel_agendamento' => 'Administrador Master',
+                'observacoes' => 'Agendamento piloto para expedicao da OT principal.',
+                'status' => 'confirmado',
+            ]);
+
+            $pickupScheduleId = (int) $this->db->table('pickup_schedules')
+                ->where('company_id', $companyId)
+                ->where('transport_document_id', $transportDocumentId)
+                ->get()
+                ->getRow('id');
+
+            $this->db->table('vehicle_checkins')->ignore(true)->insert([
+                'company_id' => $companyId,
+                'transport_document_id' => $transportDocumentId,
+                'pickup_schedule_id' => $pickupScheduleId ?: null,
+                'transporter_id' => $translogId,
+                'driver_id' => $driverId,
+                'vehicle_id' => $vehicleId,
+                'placa' => 'BRA2E19',
+                'doca' => 'Doca 05',
+                'horario_chegada' => '2026-03-18 08:20:00',
+                'horario_entrada' => '2026-03-18 08:35:00',
+                'horario_saida' => null,
+                'status' => 'em_doca',
+                'observacoes' => 'Check-in inicial do fluxo piloto.',
+                'divergencia' => 0,
+            ]);
+
             $this->db->table('incidents')->ignore(true)->insert([
                 'company_id' => $companyId,
                 'transport_document_id' => $transportDocumentId,
@@ -363,6 +418,62 @@ class TmsSeeder extends Seeder
                 'auditado_por' => 'Administrador Master',
                 'data_auditoria' => '2026-03-22 10:30:00',
             ]);
+
+            $freightAuditId = (int) $this->db->table('freight_audits')
+                ->where('company_id', $companyId)
+                ->where('ordem_transporte_id', $transportDocumentId)
+                ->get()
+                ->getRow('id');
+
+            if ($freightAuditId > 0) {
+                $this->db->table('freight_financial_entries')->ignore(true)->insert([
+                    'company_id' => $companyId,
+                    'transport_document_id' => $transportDocumentId,
+                    'freight_audit_id' => $freightAuditId,
+                    'transporter_id' => $translogId,
+                    'valor_previsto' => 15650.00,
+                    'valor_aprovado' => null,
+                    'valor_pago' => null,
+                    'data_prevista_pagamento' => '2026-03-28',
+                    'data_pagamento' => null,
+                    'forma_pagamento' => 'pix',
+                    'status' => 'bloqueado',
+                    'motivo_bloqueio' => 'Bloqueado automaticamente por divergencia na auditoria.',
+                    'observacoes' => 'Lancamento financeiro piloto vinculado a auditoria divergente.',
+                    'criado_por' => 'Administrador Master',
+                    'atualizado_por' => 'Administrador Master',
+                ]);
+
+                $financialEntryId = (int) $this->db->table('freight_financial_entries')
+                    ->where('company_id', $companyId)
+                    ->where('freight_audit_id', $freightAuditId)
+                    ->get()
+                    ->getRow('id');
+
+                if ($financialEntryId > 0) {
+                    $this->db->table('freight_financial_histories')->ignore(true)->insert([
+                        'company_id' => $companyId,
+                        'freight_financial_entry_id' => $financialEntryId,
+                        'evento' => 'criado',
+                        'status_anterior' => null,
+                        'status_novo' => 'bloqueado',
+                        'motivo' => 'Lancamento criado a partir da auditoria de frete.',
+                        'payload_json' => json_encode(['origem' => 'auditoria'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+                        'responsavel' => 'Administrador Master',
+                    ]);
+
+                    $this->db->table('freight_financial_histories')->ignore(true)->insert([
+                        'company_id' => $companyId,
+                        'freight_financial_entry_id' => $financialEntryId,
+                        'evento' => 'bloqueado',
+                        'status_anterior' => 'pendente',
+                        'status_novo' => 'bloqueado',
+                        'motivo' => 'Bloqueado automaticamente por divergencia na auditoria.',
+                        'payload_json' => json_encode(['diferenca_valor' => 250.00], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+                        'responsavel' => 'Administrador Master',
+                    ]);
+                }
+            }
         }
 
         $financeUserId = $this->upsertUser([
@@ -432,7 +543,10 @@ class TmsSeeder extends Seeder
                 'transport_orders.view', 'transport_orders.create', 'transport_orders.update', 'transport_orders.delete',
                 'loads.view', 'loads.create', 'loads.update', 'loads.delete',
                 'freight_quotations.view', 'freight_quotations.create', 'freight_quotations.update', 'freight_quotations.delete', 'freight_quotations.approve',
+                'freight_hirings.view', 'freight_hirings.create', 'freight_hirings.update',
                 'transport_documents.view', 'transport_documents.create', 'transport_documents.update', 'transport_documents.delete',
+                'pickup_schedules.view', 'pickup_schedules.create', 'pickup_schedules.update',
+                'vehicle_checkins.view', 'vehicle_checkins.create', 'vehicle_checkins.update',
                 'delivery_tracking.view', 'delivery_tracking.update',
                 'incidents.view', 'incidents.create', 'incidents.update', 'incidents.delete',
                 'trip_documents.view', 'trip_documents.create', 'trip_documents.delete',
@@ -448,7 +562,10 @@ class TmsSeeder extends Seeder
                 'transport_orders.view', 'transport_orders.create', 'transport_orders.update',
                 'loads.view', 'loads.create', 'loads.update',
                 'freight_quotations.view', 'freight_quotations.create', 'freight_quotations.update',
+                'freight_hirings.view', 'freight_hirings.create', 'freight_hirings.update',
                 'transport_documents.view', 'transport_documents.create', 'transport_documents.update',
+                'pickup_schedules.view', 'pickup_schedules.create', 'pickup_schedules.update',
+                'vehicle_checkins.view', 'vehicle_checkins.create', 'vehicle_checkins.update',
                 'delivery_tracking.view', 'delivery_tracking.update',
                 'incidents.view', 'incidents.create', 'incidents.update',
                 'trip_documents.view', 'trip_documents.create',
@@ -460,12 +577,13 @@ class TmsSeeder extends Seeder
                 'trip_documents.view',
                 'proof_of_deliveries.view',
                 'freight_audits.view', 'freight_audits.create', 'freight_audits.update',
-                'financial.view',
+                'financial.view', 'financial.create', 'financial.update',
                 'reports.view',
             ],
             'carrier' => [
                 'dashboard.view',
                 'freight_quotations.view', 'freight_quotations.respond',
+                'freight_hirings.view',
                 'transport_documents.view',
                 'delivery_tracking.view', 'delivery_tracking.update',
                 'incidents.view', 'incidents.create', 'incidents.update',
@@ -477,6 +595,7 @@ class TmsSeeder extends Seeder
                 'transport_documents.view',
                 'delivery_tracking.view', 'delivery_tracking.update',
                 'incidents.view', 'incidents.create',
+                'trip_documents.view',
                 'proof_of_deliveries.view', 'proof_of_deliveries.create',
             ],
         ];

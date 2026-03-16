@@ -3,7 +3,6 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useDispatch } from 'react-redux'
 import { CAlert, CButton } from '@coreui/react'
 import CrudPageHeader from '../../../components/crud/CrudPageHeader'
-import carrierService from '../../carriers/services/carrierService'
 import vehicleService from '../services/vehicleService'
 import VehicleForm from '../components/VehicleForm'
 import { validateVehicleForm } from '../utils/vehicleValidation'
@@ -28,7 +27,12 @@ const VehicleFormPage = () => {
   const isEdit = Boolean(id)
   const [values, setValues] = useState(initialValues)
   const [errors, setErrors] = useState({})
-  const [carriers, setCarriers] = useState([])
+  const [options, setOptions] = useState({
+    transporters: [],
+    vehicleTypeOptions: [],
+    bodyTypeOptions: [],
+    statusOptions: ['active', 'inactive'],
+  })
   const [feedback, setFeedback] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
@@ -36,8 +40,13 @@ const VehicleFormPage = () => {
   useEffect(() => {
     const bootstrap = async () => {
       try {
-        const carrierResponse = await carrierService.list({ page: 1, perPage: 100, status: '' })
-        setCarriers(carrierResponse.items || [])
+        const vehicleOptions = await vehicleService.options()
+        setOptions({
+          transporters: vehicleOptions.transporters || [],
+          vehicleTypeOptions: vehicleOptions.vehicleTypeOptions || [],
+          bodyTypeOptions: vehicleOptions.bodyTypeOptions || [],
+          statusOptions: vehicleOptions.statusOptions || ['active', 'inactive'],
+        })
 
         if (isEdit) {
           const data = await vehicleService.findById(id)
@@ -129,7 +138,7 @@ const VehicleFormPage = () => {
         <VehicleForm
           values={values}
           errors={errors}
-          carriers={carriers}
+          options={options}
           isSubmitting={isSubmitting}
           onChange={handleChange}
           onSubmit={handleSubmit}

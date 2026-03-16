@@ -131,7 +131,7 @@ const ProofOfDeliveryFormPage = () => {
         createPath="/execution/proof-of-deliveries"
         createLabel="Voltar para listagem"
       />
-      <div className="mb-3 d-flex gap-2">
+      <div className="mb-3 tms-mobile-stack-actions">
         <CButton color="secondary" variant="outline" as={Link} to="/execution/proof-of-deliveries">
           Voltar
         </CButton>

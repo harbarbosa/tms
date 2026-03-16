@@ -4,6 +4,7 @@ namespace App\Controllers\Api\V1;
 
 use App\Models\DeliveryReceiptModel;
 use App\Models\FreightAuditModel;
+use App\Models\FreightFinancialEntryModel;
 use App\Models\TransportDocumentModel;
 use App\Models\TripDocumentModel;
 use App\Validation\FreightAuditValidation;
@@ -19,11 +20,14 @@ class FreightAuditController extends BaseApiController
 
     private DeliveryReceiptModel $deliveryReceipts;
 
+    private FreightFinancialEntryModel $financialEntries;
+
     public function __construct(private readonly FreightAuditModel $audits = new FreightAuditModel())
     {
         $this->transportDocuments = new TransportDocumentModel();
         $this->tripDocuments = new TripDocumentModel();
         $this->deliveryReceipts = new DeliveryReceiptModel();
+        $this->financialEntries = new FreightFinancialEntryModel();
     }
 
     public function index()
@@ -44,6 +48,8 @@ class FreightAuditController extends BaseApiController
             ->where('freight_audits.company_id', $companyId)
             ->orderBy('freight_audits.data_auditoria', 'DESC')
             ->orderBy('freight_audits.id', 'DESC');
+
+        $this->applyCarrierScope($builder);
 
         if ($status !== '') {
             $builder->where('freight_audits.status_auditoria', $status);
@@ -94,11 +100,12 @@ class FreightAuditController extends BaseApiController
 
         return $this->respondSuccess([
             'statusOptions' => self::STATUSES,
-            'transport_documents' => $this->transportDocuments
+            'transport_documents' => $this->applyCarrierScope(
+                $this->transportDocuments
                 ->select('id, numero_ot, valor_frete_contratado, status')
                 ->where('company_id', $companyId)
                 ->orderBy('id', 'DESC')
-                ->findAll(),
+            )->findAll(),
         ], 'Opcoes da auditoria carregadas com sucesso.');
     }
 
@@ -185,6 +192,8 @@ class FreightAuditController extends BaseApiController
             $auditId = (int) $this->audits->getInsertID();
         }
 
+        $this->syncFinancialEntries($companyId, $auditId, $data);
+
         return $this->respondSuccess(
             [
                 ...$this->findAuditOrFail($auditId),
@@ -198,12 +207,15 @@ class FreightAuditController extends BaseApiController
     private function findAuditOrFail(int $id): array
     {
         $companyId = (int) ($this->authContext->getCompany()['id'] ?? 0);
-        $audit = $this->audits
+        $builder = $this->audits
             ->select('freight_audits.*, transport_documents.numero_ot, transport_documents.valor_frete_contratado, transport_documents.status as ordem_status, carriers.razao_social as transporter_name')
             ->join('transport_documents', 'transport_documents.id = freight_audits.ordem_transporte_id')
             ->join('carriers', 'carriers.id = transport_documents.transporter_id')
             ->where('freight_audits.company_id', $companyId)
-            ->find($id);
+            ->where('freight_audits.id', $id);
+
+        $this->applyCarrierScope($builder);
+        $audit = $builder->first();
 
         if ($audit === null) {
             throw PageNotFoundException::forPageNotFound('Auditoria de frete nao encontrada.');
@@ -233,6 +245,42 @@ class FreightAuditController extends BaseApiController
             'proof_of_delivery' => $proofOfDelivery,
             'cte_count' => count($cteDocuments),
             'has_proof_of_delivery' => $proofOfDelivery !== null,
+            'financial_entry' => $this->financialEntries
+                ->select('freight_financial_entries.id, freight_financial_entries.status, freight_financial_entries.valor_previsto, freight_financial_entries.valor_aprovado, freight_financial_entries.valor_pago')
+                ->join('freight_audits', 'freight_audits.id = freight_financial_entries.freight_audit_id')
+                ->where('freight_financial_entries.company_id', $companyId)
+                ->where('freight_audits.ordem_transporte_id', $transportDocumentId)
+                ->first(),
         ];
+    }
+
+    private function syncFinancialEntries(int $companyId, int $auditId, array $auditData): void
+    {
+        $entry = $this->financialEntries
+            ->where('company_id', $companyId)
+            ->where('freight_audit_id', $auditId)
+            ->first();
+
+        if ($entry === null || in_array($entry['status'], ['pago', 'cancelado'], true)) {
+            return;
+        }
+
+        $hasDivergence = (float) ($auditData['diferenca_valor'] ?? 0) !== 0 || ($auditData['status_auditoria'] ?? '') === 'divergente';
+
+        if ($hasDivergence) {
+            $this->financialEntries->update((int) $entry['id'], [
+                'status' => 'bloqueado',
+                'motivo_bloqueio' => 'Bloqueado automaticamente por divergencia na auditoria atualizada.',
+            ]);
+        }
+    }
+
+    private function applyCarrierScope($builder)
+    {
+        if ($this->getCurrentRole() === 'carrier') {
+            $builder->where('transport_documents.transporter_id', (int) ($this->getCurrentScope()['carrier_id'] ?? 0));
+        }
+
+        return $builder;
     }
 }

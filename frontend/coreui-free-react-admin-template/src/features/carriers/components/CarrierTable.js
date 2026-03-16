@@ -12,13 +12,14 @@ import {
   CTableRow,
 } from '@coreui/react'
 import CrudStatusBadge from '../../../components/crud/CrudStatusBadge'
+import CrudTableEmptyState from '../../../components/crud/CrudTableEmptyState'
 
 const CarrierTable = ({ items, onDelete, canEdit = true, canDelete = true }) => {
   return (
-    <CCard className="mb-4">
+    <CCard className="mb-4 shadow-sm border-0">
       <CCardBody>
-        <CTable hover responsive>
-          <CTableHead>
+        <CTable hover responsive align="middle">
+          <CTableHead color="light">
             <CTableRow>
               <CTableHeaderCell>Razao social</CTableHeaderCell>
               <CTableHeaderCell>Nome fantasia</CTableHeaderCell>
@@ -30,15 +31,18 @@ const CarrierTable = ({ items, onDelete, canEdit = true, canDelete = true }) => 
           </CTableHead>
           <CTableBody>
             {items.length === 0 ? (
-              <CTableRow>
-                <CTableDataCell colSpan={6} className="text-center text-body-secondary py-4">
-                  Nenhuma transportadora encontrada com os filtros informados.
-                </CTableDataCell>
-              </CTableRow>
+              <CrudTableEmptyState
+                colSpan={6}
+                title="Nenhuma transportadora encontrada."
+                description="Ajuste os filtros ou cadastre uma nova transportadora para continuar."
+              />
             ) : (
               items.map((item) => (
                 <CTableRow key={item.id}>
-                  <CTableDataCell>{item.razao_social}</CTableDataCell>
+                  <CTableDataCell>
+                    <div className="fw-semibold">{item.razao_social}</div>
+                    {item.email ? <small className="text-body-secondary">{item.email}</small> : null}
+                  </CTableDataCell>
                   <CTableDataCell>{item.nome_fantasia || '-'}</CTableDataCell>
                   <CTableDataCell>{item.cnpj || '-'}</CTableDataCell>
                   <CTableDataCell>{[item.cidade, item.estado].filter(Boolean).join('/') || '-'}</CTableDataCell>
@@ -59,7 +63,7 @@ const CarrierTable = ({ items, onDelete, canEdit = true, canDelete = true }) => 
                         </CButton>
                       ) : null}
                       {canDelete ? (
-                        <CButton color="danger" variant="outline" size="sm" onClick={() => onDelete(item)}>
+                        <CButton color="danger" variant="ghost" size="sm" onClick={() => onDelete(item)}>
                           Excluir
                         </CButton>
                       ) : null}

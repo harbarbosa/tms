@@ -17,9 +17,20 @@ class ApiExceptionHandler extends BaseExceptionHandler implements ExceptionHandl
         int $statusCode,
         int $exitCode,
     ): void {
+        log_message('error', 'API exception handled: {type} | request={method} {path} | status={status} | message={message}', [
+            'type' => $exception::class,
+            'method' => $request->getMethod(),
+            'path' => '/' . trim($request->getUri()->getPath(), '/'),
+            'status' => $statusCode,
+            'message' => $exception->getMessage(),
+        ]);
+
+        $requestId = $request->getHeaderLine('X-Request-Id') ?: bin2hex(random_bytes(8));
+
         $response
             ->setStatusCode($statusCode)
             ->setContentType('application/json')
+            ->setHeader('X-Request-Id', $requestId)
             ->setJSON([
                 'success' => false,
                 'message' => $this->isDisplayErrorsEnabled()
@@ -31,6 +42,11 @@ class ApiExceptionHandler extends BaseExceptionHandler implements ExceptionHandl
                     'line' => $exception->getLine(),
                 ] : null,
                 'data' => null,
+                'meta' => [
+                    'request_id' => $requestId,
+                    'timestamp' => gmdate('c'),
+                    'path' => '/' . trim($request->getUri()->getPath(), '/'),
+                ],
             ])
             ->send();
 

@@ -14,7 +14,7 @@ import {
 
 const formatDateTime = (value) => new Date(value).toLocaleString('pt-BR')
 
-const ProofOfDeliveryTable = ({ items, onPreview }) => {
+const ProofOfDeliveryTable = ({ items, onPreview, canEdit = true }) => {
   return (
     <CCard className="mb-4 shadow-sm border-0">
       <CCardBody>
@@ -49,9 +49,11 @@ const ProofOfDeliveryTable = ({ items, onPreview }) => {
                       <CButton color="secondary" variant="outline" size="sm" onClick={() => onPreview(item.id)}>
                         Visualizar
                       </CButton>
-                      <CButton color="info" variant="outline" size="sm" as={Link} to={`/execution/proof-of-deliveries/${item.id}/edit`}>
-                        Editar
-                      </CButton>
+                      {canEdit ? (
+                        <CButton color="info" variant="outline" size="sm" as={Link} to={`/execution/proof-of-deliveries/${item.id}/edit`}>
+                          Editar
+                        </CButton>
+                      ) : null}
                     </div>
                   </CTableDataCell>
                 </CTableRow>

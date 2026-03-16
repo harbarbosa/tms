@@ -51,6 +51,7 @@ class ApiClient {
     let requestConfig = {
       method: 'GET',
       headers: {},
+      timeoutMs: 30000,
       ...options,
     }
 
@@ -59,8 +60,37 @@ class ApiClient {
     }
 
     const requestUrl = joinUrl(this.baseUrl, path)
-    const response = await fetch(requestUrl, requestConfig)
-    const data = await parseResponseBody(response)
+    const timeoutController = new AbortController()
+    const timeoutId = setTimeout(() => timeoutController.abort(), requestConfig.timeoutMs)
+    let response
+    let data = null
+
+    try {
+      response = await fetch(requestUrl, {
+        ...requestConfig,
+        signal: requestConfig.signal || timeoutController.signal,
+      })
+      data = await parseResponseBody(response)
+    } catch (error) {
+      const isTimeout = error?.name === 'AbortError'
+      const apiError = new ApiError(
+        isTimeout
+          ? 'A requisicao excedeu o tempo limite. Tente novamente.'
+          : 'Nao foi possivel comunicar com a API. Verifique a conexao e tente novamente.',
+        {
+          status: null,
+          data: null,
+        },
+      )
+
+      for (const interceptor of this.responseInterceptors) {
+        await interceptor({ path, requestUrl, requestConfig, response: null, data: null, error: apiError })
+      }
+
+      throw apiError
+    } finally {
+      clearTimeout(timeoutId)
+    }
 
     for (const interceptor of this.responseInterceptors) {
       await interceptor({ path, requestUrl, requestConfig, response, data })

@@ -15,6 +15,7 @@ class TransportDocumentModel extends BaseModel
         'numero_ot',
         'carga_id',
         'pedido_id',
+        'freight_hiring_id',
         'transporter_id',
         'driver_id',
         'vehicle_id',

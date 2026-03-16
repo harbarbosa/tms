@@ -3,6 +3,7 @@
 namespace App\Controllers\Api\V1;
 
 use App\Models\CarrierModel;
+use App\Models\FreightHiringModel;
 use App\Models\FreightQuotationModel;
 use App\Models\FreightQuoteProposalModel;
 use App\Models\LoadModel;
@@ -24,12 +25,15 @@ class FreightQuotationController extends BaseApiController
 
     private FreightQuoteProposalModel $proposals;
 
+    private FreightHiringModel $hirings;
+
     public function __construct(private readonly FreightQuotationModel $quotations = new FreightQuotationModel())
     {
         $this->carriers = new CarrierModel();
         $this->orders = new TransportOrderModel();
         $this->loads = new LoadModel();
         $this->proposals = new FreightQuoteProposalModel();
+        $this->hirings = new FreightHiringModel();
     }
 
     public function index()
@@ -201,9 +205,63 @@ class FreightQuotationController extends BaseApiController
         $this->proposals->where('cotacao_id', $id)->set(['status_resposta' => 'recusada'])->update();
         $this->proposals->update($proposalId, ['status_resposta' => 'aprovada']);
         $this->quotations->update($id, ['status' => 'aprovada']);
-        $this->markReferenceAsContracted((int) $quotation['company_id'], $quotation['tipo_referencia'], (int) $quotation['referencia_id']);
 
         return $this->respondSuccess($this->buildQuotationPayload($id), 'Proposta aprovada com sucesso.');
+    }
+
+    public function respondProposal(int $id, int $proposalId)
+    {
+        $this->requirePermission('freight_quotations.respond');
+        $quotation = $this->findQuotationOrFail($id);
+        $proposal = $this->proposals
+            ->where('cotacao_id', $id)
+            ->find($proposalId);
+
+        if ($proposal === null) {
+            throw PageNotFoundException::forPageNotFound('Proposta nao encontrada.');
+        }
+
+        $carrierId = (int) ($this->getCurrentScope()['carrier_id'] ?? 0);
+
+        if ($this->getCurrentRole() !== 'carrier' || $carrierId <= 0 || (int) $proposal['transporter_id'] !== $carrierId) {
+            return $this->respondError('Voce nao possui acesso a proposta informada.', null, 403);
+        }
+
+        $payload = $this->getJsonPayload();
+        $status = trim((string) ($payload['status_resposta'] ?? 'respondida'));
+        $valorFrete = $payload['valor_frete'] ?? null;
+        $prazoEntregaDias = $payload['prazo_entrega_dias'] ?? null;
+        $observacoes = trim((string) ($payload['observacoes'] ?? '')) ?: null;
+        $errors = [];
+
+        if (! in_array($status, ['respondida', 'recusada'], true)) {
+            $errors['status_resposta'] = 'Informe um status de resposta valido.';
+        }
+
+        if ($status === 'respondida' && ($valorFrete === '' || $valorFrete === null || ! is_numeric($valorFrete))) {
+            $errors['valor_frete'] = 'Informe um valor de frete valido.';
+        }
+
+        if ($status === 'respondida' && ($prazoEntregaDias === '' || $prazoEntregaDias === null || (int) $prazoEntregaDias <= 0)) {
+            $errors['prazo_entrega_dias'] = 'Informe um prazo de entrega valido.';
+        }
+
+        if ($errors !== []) {
+            return $this->respondValidationError('Nao foi possivel responder a proposta.', $errors);
+        }
+
+        $this->proposals->update($proposalId, [
+            'valor_frete' => $status === 'respondida' ? $valorFrete : null,
+            'prazo_entrega_dias' => $status === 'respondida' ? (int) $prazoEntregaDias : null,
+            'observacoes' => $observacoes,
+            'status_resposta' => $status,
+        ]);
+
+        if (($quotation['status'] ?? null) === 'enviada') {
+            $this->quotations->update($id, ['status' => 'em_analise']);
+        }
+
+        return $this->respondSuccess($this->buildQuotationPayload($id), 'Proposta respondida com sucesso.');
     }
 
     public function delete(int $id)
@@ -345,16 +403,25 @@ class FreightQuotationController extends BaseApiController
 
     private function getProposals(int $quotationId): array
     {
-        return $this->proposals
+        $builder = $this->proposals
             ->select('freight_quote_proposals.*, carriers.razao_social as transporter_name, carriers.nome_fantasia')
             ->join('carriers', 'carriers.id = freight_quote_proposals.transporter_id')
-            ->where('cotacao_id', $quotationId)
-            ->findAll();
+            ->where('cotacao_id', $quotationId);
+
+        if ($this->getCurrentRole() === 'carrier') {
+            $builder->where('freight_quote_proposals.transporter_id', (int) ($this->getCurrentScope()['carrier_id'] ?? 0));
+        }
+
+        return $builder->findAll();
     }
 
     private function buildQuotationPayload(int $quotationId): array
     {
         $quotation = $this->quotations->find($quotationId);
+        $approvedHiring = $this->hirings
+            ->where('company_id', (int) $quotation['company_id'])
+            ->where('freight_quotation_id', $quotationId)
+            ->first();
 
         return [
             ...$quotation,
@@ -364,6 +431,7 @@ class FreightQuotationController extends BaseApiController
                 (int) $quotation['referencia_id']
             ),
             'proposals' => $this->getProposals($quotationId),
+            'approved_hiring_id' => $approvedHiring['id'] ?? null,
         ];
     }
 
@@ -438,13 +506,6 @@ class FreightQuotationController extends BaseApiController
     {
         if ($type === 'pedido') {
             $this->orders->where('company_id', $companyId)->update($referenceId, ['status' => 'cotacao']);
-        }
-    }
-
-    private function markReferenceAsContracted(int $companyId, string $type, int $referenceId): void
-    {
-        if ($type === 'pedido') {
-            $this->orders->where('company_id', $companyId)->update($referenceId, ['status' => 'contratado']);
         }
     }
 }

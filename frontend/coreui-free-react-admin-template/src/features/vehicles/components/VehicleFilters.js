@@ -8,9 +8,8 @@ import {
   CFormSelect,
   CRow,
 } from '@coreui/react'
-import { vehicleTypes } from '../utils/vehicleValidation'
 
-const VehicleFilters = ({ filters, carriers, onChange, onSearch, onReset }) => {
+const VehicleFilters = ({ filters, carriers, vehicleTypeOptions, onChange, onSearch, onReset }) => {
   return (
     <CCard className="mb-4">
       <CCardBody>
@@ -39,7 +38,7 @@ const VehicleFilters = ({ filters, carriers, onChange, onSearch, onReset }) => {
             <label className="form-label">Tipo</label>
             <CFormSelect name="tipo_veiculo" value={filters.tipo_veiculo} onChange={onChange}>
               <option value="">Todos</option>
-              {vehicleTypes.map((type) => (
+              {(vehicleTypeOptions || []).map((type) => (
                 <option key={type} value={type}>
                   {type}
                 </option>

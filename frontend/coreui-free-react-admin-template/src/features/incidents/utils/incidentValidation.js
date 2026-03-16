@@ -1,4 +1,11 @@
-export const incidentTypes = ['atraso', 'avaria', 'recusa', 'devolucao', 'extravio', 'problema_operacional']
+export const incidentTypes = [
+  'atraso',
+  'avaria',
+  'recusa',
+  'devolucao',
+  'extravio',
+  'problema_operacional',
+]
 
 export const incidentStatuses = ['aberta', 'em_tratativa', 'resolvida', 'cancelada']
 

@@ -5,10 +5,6 @@ export const isValidVehiclePlate = (value) => {
   return /^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$/.test(plate)
 }
 
-export const vehicleTypes = ['CAVALO', 'TRUCK', 'TOCO', 'VUC', 'BITREM', 'CARRETA']
-
-export const bodyTypes = ['BAU', 'SIDER', 'GRANELEIRO', 'TANQUE', 'PORTA_CONTAINER']
-
 export const validateVehicleForm = (values) => {
   const errors = {}
 

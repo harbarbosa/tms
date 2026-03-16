@@ -3,6 +3,8 @@
 namespace App\Controllers\Api\V1;
 
 use App\Models\IncidentModel;
+use App\Models\LoadModel;
+use App\Models\TransportOrderModel;
 use App\Models\TrackingEventModel;
 use App\Models\TransportDocumentModel;
 use App\Validation\TrackingValidation;
@@ -14,11 +16,17 @@ class DeliveryTrackingController extends BaseApiController
 
     private IncidentModel $incidents;
 
+    private LoadModel $loads;
+
+    private TransportOrderModel $orders;
+
     public function __construct(
         private readonly TrackingEventModel $events = new TrackingEventModel(),
         private readonly TransportDocumentModel $documents = new TransportDocumentModel(),
     ) {
         $this->incidents = new IncidentModel();
+        $this->loads = new LoadModel();
+        $this->orders = new TransportOrderModel();
     }
 
     public function index()
@@ -223,5 +231,36 @@ class DeliveryTrackingController extends BaseApiController
         $this->documents->update($documentId, [
             'status' => $map[$trackingStatus] ?? 'programada',
         ]);
+
+        $document = $this->documents->find($documentId);
+        if ($document === null) {
+            return;
+        }
+
+        if (! empty($document['pedido_id'])) {
+            $orderStatus = match ($trackingStatus) {
+                'entregue' => 'entregue',
+                'cancelado' => 'cancelado',
+                'coletado', 'em_transito', 'em_entrega', 'com_ocorrencia' => 'em_transporte',
+                default => 'contratado',
+            };
+
+            $this->orders
+                ->where('company_id', (int) $document['company_id'])
+                ->update((int) $document['pedido_id'], ['status' => $orderStatus]);
+        }
+
+        if (! empty($document['carga_id'])) {
+            $loadStatus = match ($trackingStatus) {
+                'entregue' => 'entregue',
+                'cancelado' => 'cancelada',
+                'coletado', 'em_transito', 'em_entrega', 'com_ocorrencia' => 'em_transporte',
+                default => 'pronta',
+            };
+
+            $this->loads
+                ->where('company_id', (int) $document['company_id'])
+                ->update((int) $document['carga_id'], ['status' => $loadStatus]);
+        }
     }
 }

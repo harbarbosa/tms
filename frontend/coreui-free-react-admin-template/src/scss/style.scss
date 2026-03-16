@@ -56,6 +56,64 @@ body {
   min-height: calc(3rem + 1px); // stylelint-disable-line function-disallowed-list
 }
 
+.tms-install-banner {
+  margin: 0 1rem 1rem;
+}
+
+.tms-mobile-nav {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 1040;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  border-top: 1px solid var(--cui-border-color);
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(12px);
+}
+
+.tms-mobile-nav__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.7rem 0.35rem calc(0.75rem + env(safe-area-inset-bottom));
+  color: var(--cui-body-color);
+  font-size: 0.72rem;
+  text-decoration: none;
+}
+
+.tms-mobile-nav__item.is-active {
+  color: var(--cui-primary);
+}
+
+.tms-mobile-stack-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.tms-mobile-submit {
+  width: 100%;
+}
+
+@media (max-width: 991.98px) {
+  .tms-mobile-shell .body {
+    padding-bottom: 6.5rem;
+  }
+
+  .tms-mobile-stack-actions > * {
+    flex: 1 1 calc(50% - 0.5rem);
+  }
+}
+
+@media (min-width: 992px) {
+  .tms-mobile-submit {
+    width: auto;
+  }
+}
+
 @include color-mode(dark) {
   body {
     background-color: var(--cui-dark-bg-subtle);
@@ -63,5 +121,9 @@ body {
 
   .footer {
     --cui-footer-bg: var(--cui-body-bg);
+  }
+
+  .tms-mobile-nav {
+    background: rgba(33, 37, 41, 0.96);
   }
 }

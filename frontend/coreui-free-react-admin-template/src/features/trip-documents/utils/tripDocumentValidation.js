@@ -1,4 +1,10 @@
-export const tripDocumentTypes = ['CTe', 'MDFe', 'Nota Fiscal', 'Comprovante de Entrega', 'Outros']
+export const tripDocumentTypes = [
+  'CTe',
+  'MDFe',
+  'Nota Fiscal',
+  'Comprovante de Entrega',
+  'Outros',
+]
 
 export const validateTripDocumentForm = (values) => {
   const errors = {}

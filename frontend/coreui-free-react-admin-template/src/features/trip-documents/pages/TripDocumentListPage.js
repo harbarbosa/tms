@@ -5,6 +5,7 @@ import { CAlert } from '@coreui/react'
 import CrudPageHeader from '../../../components/crud/CrudPageHeader'
 import CrudPagination from '../../../components/crud/CrudPagination'
 import DeleteConfirmModal from '../../../components/crud/DeleteConfirmModal'
+import useAuthorization from '../../../hooks/useAuthorization'
 import tripDocumentService from '../services/tripDocumentService'
 import TripDocumentFilters from '../components/TripDocumentFilters'
 import TripDocumentTable from '../components/TripDocumentTable'
@@ -13,6 +14,7 @@ const TripDocumentListPage = () => {
   const dispatch = useDispatch()
   const location = useLocation()
   const navigate = useNavigate()
+  const { hasPermission } = useAuthorization()
   const preselectedTransportDocumentId = new URLSearchParams(location.search).get('ordem_transporte_id') || ''
   const defaultFilters = {
     search: '',
@@ -90,6 +92,7 @@ const TripDocumentListPage = () => {
         description="Gerencie CTe, MDFe, NF e demais anexos logísticos vinculados a ordem de transporte."
         createPath="/execution/trip-documents/new"
         createLabel="Novo documento"
+        canCreate={hasPermission('trip_documents.create')}
       />
       {feedback ? (
         <CAlert color="success" dismissible onClose={() => setFeedback('')}>
@@ -113,18 +116,25 @@ const TripDocumentListPage = () => {
         <CAlert color="info">Carregando documentos...</CAlert>
       ) : (
         <>
-          <TripDocumentTable items={items} onPreview={tripDocumentService.openFile} onDelete={setDeleteTarget} />
+          <TripDocumentTable
+            items={items}
+            onPreview={tripDocumentService.openFile}
+            onDelete={setDeleteTarget}
+            canDelete={hasPermission('trip_documents.delete')}
+          />
           <CrudPagination page={meta.page} pageCount={meta.pageCount} onPageChange={(page) => loadItems(page, appliedFilters)} />
         </>
       )}
-      <DeleteConfirmModal
-        visible={Boolean(deleteTarget)}
-        title="Excluir documento"
-        message={`Deseja realmente excluir o documento ${deleteTarget?.nome_arquivo_original || ''}?`}
-        isSubmitting={isDeleting}
-        onClose={() => setDeleteTarget(null)}
-        onConfirm={handleDelete}
-      />
+      {hasPermission('trip_documents.delete') ? (
+        <DeleteConfirmModal
+          visible={Boolean(deleteTarget)}
+          title="Excluir documento"
+          message={`Deseja realmente excluir o documento ${deleteTarget?.nome_arquivo_original || ''}?`}
+          isSubmitting={isDeleting}
+          onClose={() => setDeleteTarget(null)}
+          onConfirm={handleDelete}
+        />
+      ) : null}
     </>
   )
 }

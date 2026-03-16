@@ -3,25 +3,39 @@
 namespace App\Controllers\Api\V1;
 
 use App\Models\DeliveryReceiptModel;
+use App\Models\LoadModel;
+use App\Models\TrackingEventModel;
 use App\Models\TransportDocumentModel;
+use App\Models\TransportOrderModel;
+use App\Traits\HandlesApiUploads;
 use App\Validation\LogisticsDocumentValidation;
 use CodeIgniter\Exceptions\PageNotFoundException;
-use CodeIgniter\HTTP\Files\UploadedFile;
 
 class ProofOfDeliveryController extends BaseApiController
 {
+    use HandlesApiUploads;
+
     private TransportDocumentModel $transportDocuments;
+
+    private TrackingEventModel $trackingEvents;
+
+    private TransportOrderModel $orders;
+
+    private LoadModel $loads;
 
     public function __construct(private readonly DeliveryReceiptModel $receipts = new DeliveryReceiptModel())
     {
         $this->transportDocuments = new TransportDocumentModel();
+        $this->trackingEvents = new TrackingEventModel();
+        $this->orders = new TransportOrderModel();
+        $this->loads = new LoadModel();
     }
 
     public function index()
     {
+        $this->requirePermission('proof_of_deliveries.view');
         $companyId = (int) ($this->authContext->getCompany()['id'] ?? 0);
-        $page = max(1, (int) ($this->request->getGet('page') ?? 1));
-        $perPage = min(50, max(5, (int) ($this->request->getGet('perPage') ?? 10)));
+        [$page, $perPage] = $this->getPaginationParams();
         $search = trim((string) ($this->request->getGet('search') ?? ''));
         $transportDocumentId = (int) ($this->request->getGet('ordem_transporte_id') ?? 0);
 
@@ -30,6 +44,8 @@ class ProofOfDeliveryController extends BaseApiController
             ->join('transport_documents', 'transport_documents.id = delivery_receipts.ordem_transporte_id')
             ->where('delivery_receipts.company_id', $companyId)
             ->orderBy('delivery_receipts.id', 'DESC');
+
+        $this->applyOwnedTripScope($builder);
 
         if ($search !== '') {
             $builder->groupStart()
@@ -47,51 +63,59 @@ class ProofOfDeliveryController extends BaseApiController
         $items = $builder->paginate($perPage, 'default', $page);
         $pager = $this->receipts->pager;
 
-        return $this->respondSuccess([
-            'items' => $items,
-            'meta' => [
-                'page' => $page,
-                'perPage' => $perPage,
-                'total' => $total,
-                'pageCount' => $pager->getPageCount(),
-            ],
-            'filters' => [
+        return $this->respondPaginated(
+            $items,
+            $page,
+            $perPage,
+            $total,
+            $pager->getPageCount(),
+            [
                 'search' => $search,
                 'ordem_transporte_id' => $transportDocumentId > 0 ? $transportDocumentId : null,
             ],
-        ], 'Comprovantes de entrega carregados com sucesso.');
+            [],
+            'Comprovantes de entrega carregados com sucesso.'
+        );
     }
 
     public function options()
     {
+        $this->requirePermission('proof_of_deliveries.view');
         $companyId = (int) ($this->authContext->getCompany()['id'] ?? 0);
 
+        $transportDocuments = $this->transportDocuments
+            ->select('transport_documents.id, transport_documents.numero_ot, transport_documents.status')
+            ->where('transport_documents.company_id', $companyId)
+            ->orderBy('transport_documents.id', 'DESC');
+
+        $this->applyOwnedTransportDocumentScope($transportDocuments);
+
         return $this->respondSuccess([
-            'transport_documents' => $this->transportDocuments
-                ->select('id, numero_ot, status')
-                ->where('company_id', $companyId)
-                ->orderBy('id', 'DESC')
-                ->findAll(),
+            'transport_documents' => $transportDocuments->findAll(),
         ], 'Opcoes do comprovante carregadas com sucesso.');
     }
 
     public function show(int $id)
     {
+        $this->requirePermission('proof_of_deliveries.view');
         return $this->respondSuccess($this->findReceiptOrFail($id), 'Comprovante carregado com sucesso.');
     }
 
     public function create()
     {
+        $this->requirePermission('proof_of_deliveries.create');
         return $this->persist();
     }
 
     public function update(int $id)
     {
+        $this->requirePermission('proof_of_deliveries.update');
         return $this->persist($id);
     }
 
     public function view(int $id)
     {
+        $this->requirePermission('proof_of_deliveries.view');
         $receipt = $this->findReceiptOrFail($id);
         $absolutePath = WRITEPATH . $receipt['arquivo_comprovante'];
 
@@ -101,7 +125,9 @@ class ProofOfDeliveryController extends BaseApiController
 
         return $this->response
             ->setHeader('Content-Type', $receipt['mime_type'] ?: 'application/octet-stream')
+            ->setHeader('X-Content-Type-Options', 'nosniff')
             ->setHeader('Content-Disposition', 'inline; filename="' . addslashes($receipt['nome_arquivo_original']) . '"')
+            ->setHeader('Content-Length', (string) filesize($absolutePath))
             ->setBody((string) file_get_contents($absolutePath));
     }
 
@@ -110,24 +136,26 @@ class ProofOfDeliveryController extends BaseApiController
         $payload = $this->request->getPost();
 
         if (! $this->validateData($payload, LogisticsDocumentValidation::deliveryReceiptRules())) {
-            return $this->respondError('Nao foi possivel salvar o comprovante.', $this->validator->getErrors(), 422);
+            return $this->respondValidationError('Nao foi possivel salvar o comprovante.', $this->validator->getErrors());
         }
 
         $companyId = (int) ($this->authContext->getCompany()['id'] ?? 0);
         $transportDocumentId = (int) ($payload['ordem_transporte_id'] ?? 0);
 
-        if (! $this->transportDocuments->where('company_id', $companyId)->find($transportDocumentId)) {
-            return $this->respondError('Nao foi possivel salvar o comprovante.', [
+        $transportDocument = $this->findOwnedTransportDocument($transportDocumentId, $companyId);
+
+        if (! $transportDocument) {
+            return $this->respondValidationError('Nao foi possivel salvar o comprovante.', [
                 'ordem_transporte_id' => 'A ordem de transporte informada nao pertence a empresa atual.',
-            ], 422);
+            ]);
         }
 
         $existing = $id ? $this->findReceiptOrFail($id) : null;
         $file = $this->request->getFile('arquivo_comprovante');
-        $upload = $this->storeUploadedFile($file, $companyId, 'proof-of-deliveries', $existing !== null);
+        $upload = $this->storeUploadedFile($file, $companyId, 'proof-of-deliveries', $existing !== null, 'arquivo_comprovante');
 
         if ($upload['errors'] !== []) {
-            return $this->respondError('Nao foi possivel salvar o comprovante.', $upload['errors'], 422);
+            return $this->respondValidationError('Nao foi possivel salvar o comprovante.', $upload['errors']);
         }
 
         $data = [
@@ -149,9 +177,9 @@ class ProofOfDeliveryController extends BaseApiController
             $data['mime_type'] = $upload['mimeType'];
             $data['tamanho_arquivo'] = $upload['size'];
         } elseif (! $existing) {
-            return $this->respondError('Nao foi possivel salvar o comprovante.', [
+            return $this->respondValidationError('Nao foi possivel salvar o comprovante.', [
                 'arquivo_comprovante' => 'Selecione um arquivo valido.',
-            ], 422);
+            ]);
         }
 
         if ($existing) {
@@ -164,9 +192,9 @@ class ProofOfDeliveryController extends BaseApiController
                 ->first();
 
             if ($duplicate) {
-                return $this->respondError('Nao foi possivel salvar o comprovante.', [
+                return $this->respondValidationError('Nao foi possivel salvar o comprovante.', [
                     'ordem_transporte_id' => 'Ja existe comprovante cadastrado para esta ordem de transporte.',
-                ], 422);
+                ]);
             }
 
             $this->receipts->insert($data);
@@ -174,18 +202,50 @@ class ProofOfDeliveryController extends BaseApiController
         }
 
         $this->transportDocuments->where('company_id', $companyId)->update($transportDocumentId, ['status' => 'finalizada']);
+        $this->syncDeliveryCompletion($transportDocument, $companyId, trim((string) ($payload['data_entrega_real'] ?? '')), $data['observacoes_entrega']);
 
         return $this->respondSuccess($this->findReceiptOrFail($receiptId), $existing ? 'Comprovante atualizado com sucesso.' : 'Comprovante criado com sucesso.', $existing ? 200 : 201);
+    }
+
+    private function syncDeliveryCompletion(array $transportDocument, int $companyId, string $deliveryAt, ?string $notes): void
+    {
+        $latestEvent = $this->trackingEvents
+            ->where('transport_document_id', (int) $transportDocument['id'])
+            ->orderBy('event_at', 'DESC')
+            ->orderBy('id', 'DESC')
+            ->first();
+
+        if (($latestEvent['status'] ?? null) !== 'entregue') {
+            $this->trackingEvents->insert([
+                'company_id' => $companyId,
+                'transport_document_id' => (int) $transportDocument['id'],
+                'status' => 'entregue',
+                'event_at' => $deliveryAt,
+                'observacoes' => $notes ?: 'Entrega confirmada via comprovante de entrega.',
+                'attachment_path' => null,
+            ]);
+        }
+
+        if (! empty($transportDocument['pedido_id'])) {
+            $this->orders->where('company_id', $companyId)->update((int) $transportDocument['pedido_id'], ['status' => 'entregue']);
+        }
+
+        if (! empty($transportDocument['carga_id'])) {
+            $this->loads->where('company_id', $companyId)->update((int) $transportDocument['carga_id'], ['status' => 'entregue']);
+        }
     }
 
     private function findReceiptOrFail(int $id): array
     {
         $companyId = (int) ($this->authContext->getCompany()['id'] ?? 0);
-        $receipt = $this->receipts
+        $builder = $this->receipts
             ->select('delivery_receipts.*, transport_documents.numero_ot')
             ->join('transport_documents', 'transport_documents.id = delivery_receipts.ordem_transporte_id')
             ->where('delivery_receipts.company_id', $companyId)
-            ->find($id);
+            ->where('delivery_receipts.id', $id);
+
+        $this->applyOwnedTripScope($builder);
+        $receipt = $builder->first();
 
         if ($receipt === null) {
             throw PageNotFoundException::forPageNotFound('Comprovante de entrega nao encontrado.');
@@ -194,56 +254,43 @@ class ProofOfDeliveryController extends BaseApiController
         return $receipt;
     }
 
-    private function storeUploadedFile(?UploadedFile $file, int $companyId, string $folder, bool $optional = false): array
+    private function applyOwnedTripScope($builder): void
     {
-        if ((! $file || ! $file->isValid()) && $optional) {
-            return ['errors' => [], 'path' => null];
+        $role = $this->getCurrentRole();
+        $scope = $this->getCurrentScope();
+
+        if ($role === 'carrier') {
+            $builder->where('transport_documents.transporter_id', (int) ($scope['carrier_id'] ?? 0));
         }
 
-        if (! $file || ! $file->isValid()) {
-            return ['errors' => ['arquivo_comprovante' => 'Selecione um arquivo valido.']];
+        if ($role === 'driver') {
+            $builder->where('transport_documents.driver_id', (int) ($scope['driver_id'] ?? 0));
         }
-
-        $allowedExtensions = ['pdf', 'jpg', 'jpeg', 'png'];
-        $extension = strtolower($file->getExtension() ?: '');
-
-        if (! in_array($extension, $allowedExtensions, true)) {
-            return ['errors' => ['arquivo_comprovante' => 'Envie arquivos PDF, JPG, JPEG ou PNG.']];
-        }
-
-        if ($file->getSizeByUnit('kb') > 5120) {
-            return ['errors' => ['arquivo_comprovante' => 'O arquivo deve ter no maximo 5MB.']];
-        }
-
-        $relativeFolder = 'uploads/' . $folder . '/company-' . $companyId;
-        $absoluteFolder = WRITEPATH . $relativeFolder;
-
-        if (! is_dir($absoluteFolder)) {
-            mkdir($absoluteFolder, 0777, true);
-        }
-
-        $randomName = $file->getRandomName();
-        $file->move($absoluteFolder, $randomName);
-
-        return [
-            'errors' => [],
-            'path' => $relativeFolder . '/' . $randomName,
-            'originalName' => $file->getClientName(),
-            'mimeType' => $file->getClientMimeType(),
-            'size' => $file->getSize(),
-        ];
     }
 
-    private function removeFileIfExists(?string $relativePath): void
+    private function applyOwnedTransportDocumentScope($builder): void
     {
-        if (! $relativePath) {
-            return;
+        $role = $this->getCurrentRole();
+        $scope = $this->getCurrentScope();
+
+        if ($role === 'carrier') {
+            $builder->where('transport_documents.transporter_id', (int) ($scope['carrier_id'] ?? 0));
         }
 
-        $absolutePath = WRITEPATH . $relativePath;
-
-        if (is_file($absolutePath)) {
-            unlink($absolutePath);
+        if ($role === 'driver') {
+            $builder->where('transport_documents.driver_id', (int) ($scope['driver_id'] ?? 0));
         }
+    }
+
+    private function findOwnedTransportDocument(int $id, int $companyId): ?array
+    {
+        $builder = $this->transportDocuments
+            ->select('transport_documents.*')
+            ->where('transport_documents.company_id', $companyId)
+            ->where('transport_documents.id', $id);
+
+        $this->applyOwnedTransportDocumentScope($builder);
+
+        return $builder->first();
     }
 }

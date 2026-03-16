@@ -3,6 +3,7 @@ import { useDispatch } from 'react-redux'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { CAlert } from '@coreui/react'
 import CrudPageHeader from '../../../components/crud/CrudPageHeader'
+import CrudLoadingState from '../../../components/crud/CrudLoadingState'
 import CrudPagination from '../../../components/crud/CrudPagination'
 import DeleteConfirmModal from '../../../components/crud/DeleteConfirmModal'
 import carrierService from '../../carriers/services/carrierService'
@@ -26,6 +27,7 @@ const VehicleListPage = () => {
   const [appliedFilters, setAppliedFilters] = useState(defaultFilters)
   const [vehicles, setVehicles] = useState([])
   const [carriers, setCarriers] = useState([])
+  const [vehicleTypeOptions, setVehicleTypeOptions] = useState([])
   const [meta, setMeta] = useState({ page: 1, perPage: 10, total: 0, pageCount: 0 })
   const [isLoading, setIsLoading] = useState(true)
   const [feedback, setFeedback] = useState('')
@@ -61,6 +63,10 @@ const VehicleListPage = () => {
 
   useEffect(() => {
     loadCarriers()
+    vehicleService
+      .options()
+      .then((response) => setVehicleTypeOptions(response.vehicleTypeOptions || []))
+      .catch((error) => dispatch({ type: 'app/setError', payload: error.message }))
   }, [])
 
   useEffect(() => {
@@ -123,16 +129,24 @@ const VehicleListPage = () => {
       <VehicleFilters
         filters={filters}
         carriers={carriers}
+        vehicleTypeOptions={vehicleTypeOptions}
         onChange={handleFilterChange}
         onSearch={handleSearch}
         onReset={handleReset}
       />
       {isLoading ? (
-        <CAlert color="info">Carregando veiculos...</CAlert>
+        <CrudLoadingState message="Carregando veiculos..." />
       ) : (
         <>
           <VehicleTable items={vehicles} onDelete={setDeleteTarget} />
-          <CrudPagination page={meta.page} pageCount={meta.pageCount} onPageChange={(page) => loadVehicles(page, appliedFilters)} />
+          <CrudPagination
+            page={meta.page}
+            pageCount={meta.pageCount}
+            total={meta.total}
+            perPage={meta.perPage}
+            itemLabel="veiculos"
+            onPageChange={(page) => loadVehicles(page, appliedFilters)}
+          />
         </>
       )}
       <DeleteConfirmModal

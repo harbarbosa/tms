@@ -114,7 +114,7 @@ const DeliveryTrackingDetailsPage = () => {
 
   return (
     <>
-      <div className="mb-3 d-flex gap-2 flex-wrap">
+      <div className="mb-3 tms-mobile-stack-actions">
         <CButton color="secondary" variant="outline" as={Link} to="/execution/delivery-tracking">
           Voltar
         </CButton>
@@ -133,7 +133,7 @@ const DeliveryTrackingDetailsPage = () => {
         </CAlert>
       ) : null}
       <CRow className="g-4">
-        <CCol lg={8}>
+        <CCol lg={8} className="order-2 order-lg-1">
           <CCard className="mb-4 shadow-sm border-0">
             <CCardHeader className="d-flex justify-content-between align-items-center">
               <span>{tracking.numero_ot}</span>
@@ -170,7 +170,7 @@ const DeliveryTrackingDetailsPage = () => {
           </CCard>
           <TrackingTimeline events={tracking.events || []} />
         </CCol>
-        <CCol lg={4}>
+        <CCol lg={4} className="order-1 order-lg-2">
           <Can permission="delivery_tracking.update">
             <TrackingEventForm
               values={eventValues}
